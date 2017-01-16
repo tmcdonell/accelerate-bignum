@@ -52,6 +52,8 @@ test-suite accelerate-bignum-test
   build-depends:
           base                          >= 4.7 && < 4.10
         , accelerate-bignum
+        , tasty
+        , tasty-quickcheck
 
   ghc-options:
         -Wall
