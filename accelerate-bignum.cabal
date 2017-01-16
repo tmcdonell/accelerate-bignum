@@ -26,14 +26,20 @@ library
   hs-source-dirs:       src
   exposed-modules:
   other-modules:
+      Data.Array.Accelerate.Data.Internal.Num2
+
   build-depends:
           base                          >= 4.7 && < 4.10
+        , ghc-prim
         , accelerate                    >= 0.16
 
   ghc-options:
         -O2
         -Wall
         -fwarn-tabs
+
+  cpp-options:
+        -DUNBOXED_TUPLES=1
 
 
 test-suite accelerate-bignum-test
