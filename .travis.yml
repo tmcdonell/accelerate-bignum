@@ -1,0 +1,81 @@
+# vim: nospell
+#
+language: generic
+dist: precise
+
+cache:
+  directories:
+    - $HOME/.stack
+    - .stack-work/install
+
+addons:
+  apt:
+    sources: &apt_sources
+      - hvr-ghc
+
+    packages: &apt_packages
+      - libgmp-dev
+      - happy-1.19.5
+      - alex-3.1.7
+
+matrix:
+  include:
+    - env: GHC=7.8.4 CABAL=1.18 LLVM=3.5.2
+      compiler: "GHC 7.8"
+      addons:
+        apt:
+          sources: *apt_sources
+          packages:
+            - *apt_packages
+            - cabal-install-1.18
+
+    - env: GHC=7.10.3 CABAL=1.22 LLVM=3.5.2
+      compiler: "GHC 7.10"
+      addons:
+        apt:
+          sources: *apt_sources
+          packages:
+            - *apt_packages
+            - cabal-install-1.22
+
+    - env: GHC=8.0.1 CABAL=1.24 LLVM=3.8.1
+      compiler: "GHC 8.0"
+      addons:
+        apt:
+          sources: *apt_sources
+          packages:
+            - *apt_packages
+            - cabal-install-1.24
+
+  fast_finish: true
+
+before_install:
+  - export PATH=/opt/cabal/$CABAL/bin:/opt/alex/3.1.7/bin:/opt/happy/1.19.5/bin:$HOME/.cabal/bin:$PATH
+  - source .travis/install-stack.sh
+
+install:
+  - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
+  - cabal --version
+  - stack --version
+  - |
+      if [ ${GHC} == head -o ! -e stack.yaml ]; then
+        travis_retry cabal install --only-dependencies
+      else
+        travis_retry stack build --test --only-dependencies --no-terminal --no-haddock-deps
+      fi
+
+script:
+  - |
+      if [ ${GHC} == head -o ! -e stack.yaml ]; then
+        travis_retry cabal install
+        travis_retry cabal haddock
+        travis_retry cabal test
+      else
+        travis_retry stack build --no-terminal --haddock --no-haddock-deps
+        travis_retry stack test --no-terminal
+      fi
+
+after_success:
+  - source .travis/update-accelerate-buildbot.sh
+
+
