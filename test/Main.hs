@@ -40,7 +40,7 @@ main
 
 
 testNum2
-    :: (Typeable a, Arbitrary a, Show a, Num2 a, FiniteBits (Unsigned a), Integral a, Integral (Unsigned a))
+    :: (Typeable a, Arbitrary a, Show a, Num2 a, FiniteBits (Unsigned a), Integral a, Integral (Unsigned a), Bounded a)
     => proxy a
     -> TestTree
 testNum2 t = testGroup (show (typeRep t))
@@ -48,9 +48,9 @@ testNum2 t = testGroup (show (typeRep t))
   , testProperty "mulWithCarry" $ prop_mulWithCarry t
   ]
 
-prop_addWithCarry, prop_mulWithCarry :: (Num2 a, Integral a, FiniteBits (Unsigned a), Integral (Unsigned a)) => proxy a -> a -> a -> Bool
-prop_addWithCarry _ x y = uncurry toInteger2 (addWithCarry x y) == toInteger x + toInteger y
-prop_mulWithCarry _ x y = uncurry toInteger2 (mulWithCarry x y) == toInteger x * toInteger y
+prop_addWithCarry, prop_mulWithCarry :: (Num2 a, Integral a, FiniteBits (Unsigned a), Integral (Unsigned a)) => proxy a -> Large a -> Large a -> Bool
+prop_addWithCarry _ (Large x) (Large y) = uncurry toInteger2 (addWithCarry x y) == toInteger x + toInteger y
+prop_mulWithCarry _ (Large x) (Large y) = uncurry toInteger2 (mulWithCarry x y) == toInteger x * toInteger y
 
 toInteger2 :: (Integral a, Integral b, FiniteBits b, b ~ Unsigned a) => a -> b -> Integer
 toInteger2 h l = toInteger h * 2 ^ finiteBitSize l + toInteger l
