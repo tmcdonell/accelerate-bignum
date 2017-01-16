@@ -127,7 +127,10 @@ instance (Eq a, Eq b) => Eq (BigWord a b) where
   W2 xh xl /= W2 yh yl = xh /= yh || xl /= yl
 
 
-instance Integral (BigWord a b) => Real (BigWord a b) where
+instance ( Integral a, FiniteBits a, Num2 a, Bounded a, a ~ Unsigned a
+         , Integral b, FiniteBits b, Num2 b, Bounded b, b ~ Unsigned b
+         )
+    => Real (BigWord a b) where
   toRational x = toInteger x % 1
 
 
