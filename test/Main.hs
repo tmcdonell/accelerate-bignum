@@ -3,17 +3,20 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses  #-}
 {-# LANGUAGE ScopedTypeVariables    #-}
+{-# LANGUAGE TypeFamilies           #-}
 
 module Main where
 
+import Data.Bits
+import Data.Int
 import Data.Proxy
 import Data.Typeable
 import Data.Word
-import Data.Bits
 import Test.Tasty
 import Test.Tasty.QuickCheck                                        hiding ( (.&.) )
 
 import Data.Array.Accelerate.Data.BigWord
+import Data.Array.Accelerate.Data.Internal.Num2
 
 
 main :: IO ()
@@ -21,20 +24,46 @@ main
   = defaultMain
   $ localOption (QuickCheckTests 10000)
   $ testGroup "accelerate-bignum"
-    [ testAll (Proxy::Proxy U64)
-    , testAll (Proxy::Proxy UU64)
+    [ testGroup "Num2"
+      [ testNum2 (Proxy::Proxy Word8)
+      , testNum2 (Proxy::Proxy Word16)
+      , testNum2 (Proxy::Proxy Word32)
+      , testNum2 (Proxy::Proxy Word64)
+      , testNum2 (Proxy::Proxy Int8)
+      , testNum2 (Proxy::Proxy Int16)
+      , testNum2 (Proxy::Proxy Int32)
+      , testNum2 (Proxy::Proxy Int64)
+      ]
+    , testMain (Proxy::Proxy U64)
+    , testMain (Proxy::Proxy UU64)
     ]
 
 
-testAll
-    :: forall proxy a b.
-       ( Iso a b, Arbitrary a, Typeable b, Show a
+testNum2
+    :: (Typeable a, Arbitrary a, Show a, Num2 a, FiniteBits (Unsigned a), Integral a, Integral (Unsigned a))
+    => proxy a
+    -> TestTree
+testNum2 t = testGroup (show (typeRep t))
+  [ testProperty "addWithCarry" $ prop_addWithCarry t
+  , testProperty "mulWithCarry" $ prop_mulWithCarry t
+  ]
+
+prop_addWithCarry, prop_mulWithCarry :: (Num2 a, Integral a, FiniteBits (Unsigned a), Integral (Unsigned a)) => proxy a -> a -> a -> Bool
+prop_addWithCarry _ x y = uncurry toInteger2 (addWithCarry x y) == toInteger x + toInteger y
+prop_mulWithCarry _ x y = uncurry toInteger2 (mulWithCarry x y) == toInteger x * toInteger y
+
+toInteger2 :: (Integral a, Integral b, FiniteBits b, b ~ Unsigned a) => a -> b -> Integer
+toInteger2 h l = toInteger h * 2 ^ finiteBitSize l + toInteger l
+
+
+testMain
+    :: ( Iso a b, Arbitrary a, Typeable b, Show a
        , Eq a, Ord a, Bounded a, Enum a, Num a, Real a, Integral a, FiniteBits a
        , Eq b, Ord b, Bounded b, Enum b, Num b, Real b, Integral b, FiniteBits b
        )
     => proxy b
     -> TestTree
-testAll t = testGroup (show (typeRep t))
+testMain t = testGroup (show (typeRep t))
   [ testProperty "iso" $ prop_iso t
   , testGroup "Eq"
     [ testProperty "(==)" $ prop_eq t

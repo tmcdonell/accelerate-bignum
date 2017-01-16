@@ -26,8 +26,6 @@ library
   hs-source-dirs:       src
   exposed-modules:
       Data.Array.Accelerate.Data.BigWord
-
-  other-modules:
       Data.Array.Accelerate.Data.Internal.Num2
 
   build-depends:
