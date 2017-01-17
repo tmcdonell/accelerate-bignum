@@ -15,6 +15,7 @@ import Data.Word
 import Test.Tasty
 import Test.Tasty.QuickCheck                                        hiding ( (.&.) )
 
+import Data.Array.Accelerate.Data.BigInt
 import Data.Array.Accelerate.Data.BigWord
 import Data.Array.Accelerate.Data.Internal.Num2
 
@@ -35,7 +36,9 @@ main
       , testNum2 (Proxy::Proxy Int64)
       ]
     , testMain (Proxy::Proxy U64)
+    , testMain (Proxy::Proxy I64)
     , testMain (Proxy::Proxy UU64)
+    , testMain (Proxy::Proxy II64)
     ]
 
 
@@ -47,14 +50,6 @@ testNum2 t = testGroup (show (typeRep t))
   [ testProperty "addWithCarry" $ prop_addWithCarry t
   , testProperty "mulWithCarry" $ prop_mulWithCarry t
   ]
-
-prop_addWithCarry, prop_mulWithCarry :: (Num2 a, Integral a, FiniteBits (Unsigned a), Integral (Unsigned a)) => proxy a -> Large a -> Large a -> Bool
-prop_addWithCarry _ (Large x) (Large y) = uncurry toInteger2 (addWithCarry x y) == toInteger x + toInteger y
-prop_mulWithCarry _ (Large x) (Large y) = uncurry toInteger2 (mulWithCarry x y) == toInteger x * toInteger y
-
-toInteger2 :: (Integral a, Integral b, FiniteBits b, b ~ Unsigned a) => a -> b -> Integer
-toInteger2 h l = toInteger h * 2 ^ finiteBitSize l + toInteger l
-
 
 testMain
     :: ( Iso a b, Arbitrary a, Typeable b, Show a
@@ -124,6 +119,14 @@ testMain t = testGroup (show (typeRep t))
     , testProperty "countTrailingZeros" $ prop_ctz t
     ]
   ]
+
+
+prop_addWithCarry, prop_mulWithCarry :: (Num2 a, Integral a, FiniteBits (Unsigned a), Integral (Unsigned a)) => proxy a -> Large a -> Large a -> Bool
+prop_addWithCarry _ (Large x) (Large y) = uncurry toInteger2 (addWithCarry x y) == toInteger x + toInteger y
+prop_mulWithCarry _ (Large x) (Large y) = uncurry toInteger2 (mulWithCarry x y) == toInteger x * toInteger y
+
+toInteger2 :: (Integral a, Integral b, FiniteBits b, b ~ Unsigned a) => a -> b -> Integer
+toInteger2 h l = toInteger h * 2 ^ finiteBitSize l + toInteger l
 
 
 prop_iso :: (Iso a b, Eq a) => proxy b -> a -> Bool
@@ -249,7 +252,10 @@ prop_binary' :: (Iso a b, Eq r) => (a -> a -> r) -> (b -> b -> r) -> proxy b -> 
 prop_binary'  f g p x y = f x y == with_binary' p g x y
 
 
+type I64  = BigInt  Int32  Word32
 type U64  = BigWord Word32 Word32
+
+type II64 = BigInt  Int16  (BigWord Word16 Word32)
 type UU64 = BigWord Word16 (BigWord Word16 Word32)
 
 class Iso a b | b -> a where
@@ -261,8 +267,18 @@ instance Iso Word64 U64 where
   isoL (W2 h l) = fromIntegral h `shiftL` 32 .|. fromIntegral l
 
 instance Iso Word64 UU64 where
-  isoR w                 = W2 (fromIntegral $ w `shiftR` 48) (W2 (fromIntegral $ w `shiftR` 32) (fromIntegral w))
+  isoR w                 = W2 (fromIntegral (w `shiftR` 48)) (W2 (fromIntegral (w `shiftR` 32)) (fromIntegral w))
   isoL (W2 h (W2 lh ll)) =  fromIntegral h  `shiftL` 48
+                        .|. fromIntegral lh `shiftL` 32
+                        .|. fromIntegral ll
+
+instance Iso Int64 I64 where
+  isoR w        = I2 (fromIntegral (w `shiftR` 32)) (fromIntegral w)
+  isoL (I2 h l) = fromIntegral h `shiftL` 32 .|. fromIntegral l
+
+instance Iso Int64 II64 where
+  isoR w                 = I2 (fromIntegral (w `shiftR` 48)) (W2 (fromIntegral (w `shiftR` 32)) (fromIntegral w))
+  isoL (I2 h (W2 lh ll)) =  fromIntegral h  `shiftL` 48
                         .|. fromIntegral lh `shiftL` 32
                         .|. fromIntegral ll
 
