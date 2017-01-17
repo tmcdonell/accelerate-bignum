@@ -181,7 +181,13 @@ instance ( Integral a,            FiniteBits a, Num2 a, a ~ Signed a,   a ~ Sign
                   in  (signed q, signed r)
 
 
-instance Integral (BigInt a b) => Real (BigInt a b) where
+instance ( Integral a, Num a, Ord a,      FiniteBits a, Num2 a, a ~ Signed a,   a ~ Signed c
+         , Integral b, Bounded b, Eq b,   FiniteBits b, Num2 b, b ~ Unsigned b
+         , Integral c, Bounded c, Bits c, FiniteBits c, Num2 c, c ~ Unsigned a, c ~ Unsigned c
+         , Num2 (BigWord c b)
+         , Integral (Signed b), Bits (Signed b)
+         )
+    => Real (BigInt a b) where
   toRational x = toInteger x % 1
 
 
