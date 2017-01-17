@@ -11,7 +11,7 @@
 -- Stability   : experimental
 -- Portability : non-portable (GHC extensions)
 --
--- Fixed length unsigned word types.
+-- Fixed length unsigned word types
 
 -- Based on the following (BSD3) projects:
 --  * https://github.com/mvv/data-bword
@@ -28,7 +28,7 @@ module Data.Array.Accelerate.Data.BigWord (
   Word256,
   Word512,
 
-  -- Internals
+  -- ** Internals
   BigWord(..)
 
 ) where
@@ -36,9 +36,9 @@ module Data.Array.Accelerate.Data.BigWord (
 import Data.Bits
 import Data.Ratio
 import Data.Word
-import Prelude
 
 import Data.Array.Accelerate.Data.Internal.Num2
+import {-# SOURCE #-} Data.Array.Accelerate.Data.BigInt
 
 
 type Word96  = BigWord  Word32  Word64
@@ -242,10 +242,10 @@ instance ( Integral a, Ord a, FiniteBits a, Num2 a, a ~ Unsigned a
          , Integral b, Ord b, FiniteBits b, Num2 b, b ~ Unsigned b
          )
     => Num2 (BigWord a b) where
-  type Signed   (BigWord a b) = BigWord (Signed a) b      -- TLM: convert into BigInt
+  type Signed   (BigWord a b) = BigInt (Signed a) b
   type Unsigned (BigWord a b) = BigWord (Unsigned a) b
   --
-  signed   (W2 hi lo) = W2 (signed hi) lo
+  signed   (W2 hi lo) = I2 (signed hi) lo
   unsigned            = id
   --
   addWithCarry (W2 xh xl) (W2 yh yl) = (W2 0 w, W2 v u)
