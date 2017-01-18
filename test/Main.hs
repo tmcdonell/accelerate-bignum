@@ -166,21 +166,21 @@ prop_toRational = prop_unary' toRational toRational
 prop_toInteger :: (Iso a b, Integral a, Integral b) => proxy b -> a -> Bool
 prop_toInteger = prop_unary' toInteger toInteger
 
-prop_quot, prop_rem, prop_div, prop_mod :: (Iso a b, Integral a, Integral b) => proxy b -> a -> a -> Property
-prop_quot t x y = y /= 0 ==> prop_binary quot quot t x y
-prop_rem  t x y = y /= 0 ==> prop_binary rem  rem  t x y
-prop_div  t x y = y /= 0 ==> prop_binary div  div  t x y
-prop_mod  t x y = y /= 0 ==> prop_binary mod  mod  t x y
+prop_quot, prop_rem, prop_div, prop_mod :: (Iso a b, Integral a, Integral b) => proxy b -> a -> NonZero a -> Bool
+prop_quot t x (NonZero y) = prop_binary quot quot t x y
+prop_rem  t x (NonZero y) = prop_binary rem  rem  t x y
+prop_div  t x (NonZero y) = prop_binary div  div  t x y
+prop_mod  t x (NonZero y) = prop_binary mod  mod  t x y
 
-prop_quotRem :: (Iso a b, Integral a, Integral b) => proxy b -> a -> a -> Property
-prop_quotRem  t x y = y /= 0 ==>
+prop_quotRem :: (Iso a b, Integral a, Integral b) => proxy b -> a -> NonZero a -> Bool
+prop_quotRem  t x (NonZero y) =
   let qr    = quotRem x y
       (q,r) = quotRem (toIso t x) (toIso t y)
   in
   qr == (fromIso t q, fromIso t r)
 
-prop_divMod :: (Iso a b, Integral a, Integral b) => proxy b -> a -> a -> Property
-prop_divMod  t x y = y /= 0 ==>
+prop_divMod :: (Iso a b, Integral a, Integral b) => proxy b -> a -> NonZero a -> Bool
+prop_divMod  t x (NonZero y) =
   let qr    = divMod x y
       (q,r) = divMod (toIso t x) (toIso t y)
   in
