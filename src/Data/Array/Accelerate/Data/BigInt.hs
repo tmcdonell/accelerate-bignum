@@ -181,9 +181,9 @@ instance ( Integral a,            FiniteBits a, Num2 a, a ~ Signed a,   a ~ Sign
                   in  (signed q, signed r)
 
 
-instance ( Integral a, Num a, Ord a,      FiniteBits a, Num2 a, a ~ Signed a,   a ~ Signed c
-         , Integral b, Bounded b, Eq b,   FiniteBits b, Num2 b, b ~ Unsigned b
-         , Integral c, Bounded c, Bits c, FiniteBits c, Num2 c, c ~ Unsigned a, c ~ Unsigned c
+instance ( Integral a, Num a, Ord a,    FiniteBits a, Num2 a, a ~ Signed a,   a ~ Signed c
+         , Integral b, Bounded b, Eq b, FiniteBits b, Num2 b, b ~ Unsigned b
+         , Integral c, Bounded c,       FiniteBits c, Num2 c, c ~ Unsigned a, c ~ Unsigned c
          , Num2 (BigWord c b)
          , Integral (Signed b), Bits (Signed b)
          )
