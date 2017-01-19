@@ -29,6 +29,7 @@ import Data.Int
 import Data.Word
 import Data.Array.Accelerate.Data.BigWord
 import Data.Array.Accelerate.Data.Internal.BigInt
+import Data.Array.Accelerate.Data.Internal.Orphans ()
 
 type Int96  = BigInt  Int32  Word64
 type Int128 = BigInt  Int64  Word64
