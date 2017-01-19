@@ -22,47 +22,49 @@ import Data.Array.Accelerate.Data.BigWord
 import Data.Array.Accelerate.Data.Internal.Num2
 
 import Data.Array.Accelerate                                        ( Arrays, Acc, Scalar, Elt, Exp, Lift, Plain )
+import Data.Array.Accelerate.Debug                                  ( accInit )
 import qualified Data.Array.Accelerate                              as A
 import qualified Data.Array.Accelerate.Data.Bits                    as A
 import qualified Data.Array.Accelerate.Interpreter                  as I
 
 
 main :: IO ()
-main
-  = defaultMain
-  $ localOption (QuickCheckTests 10000)
-  $ testGroup "accelerate-bignum"
-    [ testGroup "base"
-      [ testGroup "Num2"
-        [ testNum2 (Proxy::Proxy Word8)
-        , testNum2 (Proxy::Proxy Word16)
-        , testNum2 (Proxy::Proxy Word32)
-        , testNum2 (Proxy::Proxy Word64)
-        , testNum2 (Proxy::Proxy Int8)
-        , testNum2 (Proxy::Proxy Int16)
-        , testNum2 (Proxy::Proxy Int32)
-        , testNum2 (Proxy::Proxy Int64)
+main = do
+  accInit
+  defaultMain
+    $ localOption (QuickCheckTests 10000)
+    $ testGroup "accelerate-bignum"
+      [ testGroup "base"
+        [ testGroup "Num2"
+          [ testNum2 (Proxy::Proxy Word8)
+          , testNum2 (Proxy::Proxy Word16)
+          , testNum2 (Proxy::Proxy Word32)
+          , testNum2 (Proxy::Proxy Word64)
+          , testNum2 (Proxy::Proxy Int8)
+          , testNum2 (Proxy::Proxy Int16)
+          , testNum2 (Proxy::Proxy Int32)
+          , testNum2 (Proxy::Proxy Int64)
+          ]
+        , testMain (Proxy::Proxy U64)
+        , testMain (Proxy::Proxy I64)
+        , testMain (Proxy::Proxy UU64)
+        , testMain (Proxy::Proxy II64)
         ]
-      , testMain (Proxy::Proxy U64)
-      , testMain (Proxy::Proxy I64)
-      , testMain (Proxy::Proxy UU64)
-      , testMain (Proxy::Proxy II64)
-      ]
-    , testGroup "accelerate"
-      [ testGroup "Num2"
-        [ testNum2Acc (Proxy::Proxy Word8)
-        , testNum2Acc (Proxy::Proxy Word16)
-        , testNum2Acc (Proxy::Proxy Word32)
-        , testNum2Acc (Proxy::Proxy Word64)
-        , testNum2Acc (Proxy::Proxy Int8)
-        , testNum2Acc (Proxy::Proxy Int16)
-        , testNum2Acc (Proxy::Proxy Int32)
-        , testNum2Acc (Proxy::Proxy Int64)
+      , testGroup "accelerate"
+        [ testGroup "Num2"
+          [ testNum2Acc (Proxy::Proxy Word8)
+          , testNum2Acc (Proxy::Proxy Word16)
+          , testNum2Acc (Proxy::Proxy Word32)
+          , testNum2Acc (Proxy::Proxy Word64)
+          , testNum2Acc (Proxy::Proxy Int8)
+          , testNum2Acc (Proxy::Proxy Int16)
+          , testNum2Acc (Proxy::Proxy Int32)
+          , testNum2Acc (Proxy::Proxy Int64)
+          ]
+        , testMainAcc (Proxy::Proxy Word96)
+        , testMainAcc (Proxy::Proxy Word128)
         ]
-      , testMainAcc (Proxy::Proxy Word96)
-      , testMainAcc (Proxy::Proxy Word128)
       ]
-    ]
 
 testNum2
     :: (Typeable a, Show a, Num2 a, FiniteBits (Unsigned a), Integral a, Integral (Unsigned a), Bounded a)
