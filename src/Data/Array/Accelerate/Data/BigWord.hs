@@ -655,7 +655,7 @@ instance ( A.Integral a, A.FiniteBits a, A.FromIntegral a b, Exp a ~ Exp (Unsign
   rotateL (unlift -> W2 hi lo) x =
     y A.>= 0 ? ( lift (W2 (A.fromIntegral (A.shiftL lo y) A..|. A.shiftR hi z)
                           (A.shiftL (A.fromIntegral hi) (A.finiteBitSize (undefined::Exp b) - z) A..|. A.shiftR lo z))
-               , lift (W2 (fromIntegral (A.shiftR lo (A.negate y)) A..|. A.shiftL hi x)
+               , lift (W2 (A.fromIntegral (A.shiftR lo (A.negate y)) A..|. A.shiftL hi x)
                           (A.shift (A.fromIntegral hi) (A.finiteBitSize (undefined::Exp b) - z) A..|. A.shiftL lo x A..|. A.shiftR lo z))
                )
     where
