@@ -1,5 +1,5 @@
 -- |
--- Module      : Data.Array.Accelerate.Data.BigInt-boot
+-- Module      : Data.Array.Accelerate.Data.Internal.BigInt-boot
 -- Copyright   : [2016] Trevor L. McDonell
 -- License     : BSD3
 --
@@ -8,7 +8,7 @@
 -- Portability : non-portable (GHC extensions)
 --
 
-module Data.Array.Accelerate.Data.BigInt
+module Data.Array.Accelerate.Data.Internal.BigInt
   where
 
 -- | Large integers of fixed size represented as separate (signed) high and

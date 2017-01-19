@@ -27,6 +27,10 @@ library
   exposed-modules:
       Data.Array.Accelerate.Data.BigInt
       Data.Array.Accelerate.Data.BigWord
+
+  other-modules:
+      Data.Array.Accelerate.Data.Internal.BigWord
+      Data.Array.Accelerate.Data.Internal.BigInt
       Data.Array.Accelerate.Data.Internal.Num2
 
   build-depends:
@@ -46,12 +50,11 @@ library
 test-suite accelerate-bignum-test
   default-language:     Haskell2010
   type:                 exitcode-stdio-1.0
-  hs-source-dirs:       test
+  hs-source-dirs:       test src
   main-is:              Main.hs
   build-depends:
           base                          >= 4.8 && < 4.10
         , accelerate                    >= 0.16
-        , accelerate-bignum
         , tasty
         , tasty-quickcheck
 
