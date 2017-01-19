@@ -399,7 +399,7 @@ instance (A.Eq a, A.Eq b, Elt (BigWord a b)) => A.Eq (BigWord a b) where
 
 instance (A.Ord a, A.Ord b, Elt (BigWord a b)) => A.Ord (BigWord a b) where
   (unlift -> W2 xh xl) <  (unlift -> W2 yh yl) = xh A.== yh ? ( xl A.< yl,  xh A.< yh )
-  (unlift -> W2 xh xl) >  (unlift -> W2 yh yl) = xh A.== yh ? ( xl A.< yl,  xh A.< yh )
+  (unlift -> W2 xh xl) >  (unlift -> W2 yh yl) = xh A.== yh ? ( xl A.> yl,  xh A.> yh )
   (unlift -> W2 xh xl) <= (unlift -> W2 yh yl) = xh A.== yh ? ( xl A.<= yl, xh A.<= yh )
   (unlift -> W2 xh xl) >= (unlift -> W2 yh yl) = xh A.== yh ? ( xl A.>= yl, xh A.>= yh )
 
