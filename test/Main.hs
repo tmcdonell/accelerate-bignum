@@ -390,11 +390,17 @@ instance (Arbitrary a, Arbitrary b) => Arbitrary (BigWord a b) where
   shrink (W2 hi lo) = [ W2 hi' lo' | (hi',lo') <- shrink (hi,lo) ]
 
 
+{-# INLINE prop_unary_acc #-}
 prop_unary_acc :: (Elt a, Elt r, Eq r) => (a -> r) -> (Exp a -> Exp r) -> proxy a -> a -> Bool
 prop_unary_acc f g p x = f x == with_unary_acc p g x
 
+{-# INLINE prop_binary_acc #-}
 prop_binary_acc :: (Elt a, Elt r, Eq r) => (a -> a -> r) -> (Exp a -> Exp a -> Exp r) -> proxy a -> a -> a -> Bool
 prop_binary_acc f g p x y = f x y == with_binary_acc p g x y
+
+{-# INLINE prop_binary_acc' #-}
+prop_binary_acc' :: (Elt a, Elt r, Eq r) => (a -> Int -> r) -> (Exp a -> Exp Int -> Exp r) -> proxy a -> a -> Int -> Bool
+prop_binary_acc' f g p x y = f x y == with_binary_acc' p g x y
 
 -- TLM: make sure to pass the operation though a 'run', otherwise the expression
 --      will be constant-folded away before hitting the backend.
@@ -411,6 +417,13 @@ with_binary_acc :: forall proxy a r. (Elt a, Elt r) => proxy a -> (Exp a -> Exp 
 with_binary_acc _ f x y = isoL $ f' (isoR x) (isoR y)
   where
     f' :: Scalar a -> Scalar a -> Scalar r
+    !f' = run2 (A.zipWith f)
+
+{-# INLINE with_binary_acc' #-}
+with_binary_acc' :: forall proxy a r. (Elt a, Elt r) => proxy a -> (Exp a -> Exp Int -> Exp r) -> a -> Int -> r
+with_binary_acc' _ f x y = isoL $ f' (isoR x) (isoR y)
+  where
+    f' :: Scalar a -> Scalar Int -> Scalar r
     !f' = run2 (A.zipWith f)
 
 {-# INLINE run2 #-}
@@ -477,23 +490,23 @@ prop_band' = prop_binary_acc (.&.) (A..&.)
 prop_bor'  = prop_binary_acc (.|.) (A..|.)
 
 prop_shiftL', prop_shiftR', prop_rotateL', prop_rotateR' :: (FiniteBits a, A.FiniteBits a) => proxy a -> a -> NonNegative Int -> Property
-prop_shiftL'  t x (NonNegative n) = n < finiteBitSize x ==> prop_unary_acc (`shiftL` n) (`A.shiftL` A.constant n) t x
-prop_shiftR'  t x (NonNegative n) = n < finiteBitSize x ==> prop_unary_acc (`shiftR` n) (`A.shiftR` A.constant n) t x
-prop_rotateL' t x (NonNegative n) = n < finiteBitSize x ==> prop_unary_acc (`rotateL` n) (`A.rotateL` A.constant n) t x
-prop_rotateR' t x (NonNegative n) = n < finiteBitSize x ==> prop_unary_acc (`rotateR` n) (`A.rotateR` A.constant n) t x
+prop_shiftL'  t x (NonNegative n) = n < finiteBitSize x ==> prop_binary_acc' shiftL A.shiftL t x n
+prop_shiftR'  t x (NonNegative n) = n < finiteBitSize x ==> prop_binary_acc' shiftR A.shiftR t x n
+prop_rotateL' t x (NonNegative n) = n < finiteBitSize x ==> prop_binary_acc' rotateL A.rotateL t x n
+prop_rotateR' t x (NonNegative n) = n < finiteBitSize x ==> prop_binary_acc' rotateR A.rotateR t x n
 
 prop_shift', prop_rotate' :: (FiniteBits a, A.FiniteBits a) => proxy a -> a -> Int -> Property
-prop_shift'  t x n = abs n < finiteBitSize x ==> prop_unary_acc (`shift` n) (`A.shift` A.constant n) t x
-prop_rotate' t x n = abs n < finiteBitSize x ==> prop_unary_acc (`rotate` n) (`A.rotate` A.constant n) t x
+prop_shift'  t x n = abs n < finiteBitSize x ==> prop_binary_acc' shift A.shift t x n
+prop_rotate' t x n = abs n < finiteBitSize x ==> prop_binary_acc' rotate A.rotate t x n
 
 prop_bit' :: forall proxy a. (FiniteBits a, A.FiniteBits a) => proxy a -> Bool
-prop_bit' _ = all (\b -> bit b == isoL (I.run (A.unit (A.bit (A.constant b) :: Exp a)))) [0 .. finiteBitSize (undefined::a) - 1]
+prop_bit' _ = all (prop_unary_acc (bit :: Int -> a) A.bit Proxy) [0 .. finiteBitSize (undefined::a) - 1]
 
 prop_testBit', prop_setBit', prop_clearBit', prop_complementBit' :: (FiniteBits a, A.FiniteBits a) => proxy a -> a -> NonNegative Int -> Property
-prop_testBit'       t x (NonNegative n) = n < finiteBitSize x ==> prop_unary_acc (`testBit` n) (`A.testBit` A.constant n) t x
-prop_setBit'        t x (NonNegative n) = n < finiteBitSize x ==> prop_unary_acc (`setBit` n) (`A.setBit` A.constant n) t x
-prop_clearBit'      t x (NonNegative n) = n < finiteBitSize x ==> prop_unary_acc (`clearBit` n) (`A.clearBit` A.constant n) t x
-prop_complementBit' t x (NonNegative n) = n < finiteBitSize x ==> prop_unary_acc (`complementBit` n) (`A.complementBit` A.constant n) t x
+prop_testBit'       t x (NonNegative n) = n < finiteBitSize x ==> prop_binary_acc' testBit A.testBit t x
+prop_setBit'        t x (NonNegative n) = n < finiteBitSize x ==> prop_binary_acc' setBit A.setBit t x
+prop_clearBit'      t x (NonNegative n) = n < finiteBitSize x ==> prop_binary_acc' clearBit A.clearBit t x
+prop_complementBit' t x (NonNegative n) = n < finiteBitSize x ==> prop_binary_acc' complementBit A.complementBit t x
 
 prop_popCount' :: (FiniteBits a, A.FiniteBits a) => proxy a -> a -> Bool
 prop_popCount' = prop_unary_acc popCount A.popCount
@@ -501,5 +514,4 @@ prop_popCount' = prop_unary_acc popCount A.popCount
 prop_clz', prop_ctz' :: (FiniteBits a, A.FiniteBits a) => proxy a -> a -> Bool
 prop_clz' = prop_unary_acc countLeadingZeros  A.countLeadingZeros
 prop_ctz' = prop_unary_acc countTrailingZeros A.countTrailingZeros
-
 
