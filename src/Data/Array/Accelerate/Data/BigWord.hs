@@ -24,15 +24,6 @@ module Data.Array.Accelerate.Data.BigWord (
 
 ) where
 
-import Data.Word
 import Data.Array.Accelerate.Data.Internal.BigWord
 import Data.Array.Accelerate.Data.Internal.Orphans ()
-
-type Word96  = BigWord  Word32  Word64
-type Word128 = BigWord  Word64  Word64
-type Word160 = BigWord  Word32 Word128
-type Word192 = BigWord  Word64 Word128
-type Word224 = BigWord  Word32 Word192
-type Word256 = BigWord Word128 Word128
-type Word512 = BigWord Word256 Word256
 

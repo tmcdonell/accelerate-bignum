@@ -21,15 +21,34 @@
 
 module Data.Array.Accelerate.Data.Internal.BigInt (
 
+  Int96,
+  Int128,
+  Int160,
+  Int192,
+  Int224,
+  Int256,
+  Int512,
+
   BigInt(..)
 
 ) where
 
 import Data.Bits
+import Data.Int
 import Data.Ratio
+import Data.Word
 
 import Data.Array.Accelerate.Data.Internal.BigWord
 import Data.Array.Accelerate.Data.Internal.Num2
+
+
+type Int96  = BigInt  Int32  Word64
+type Int128 = BigInt  Int64  Word64
+type Int160 = BigInt  Int32 Word128
+type Int192 = BigInt  Int64 Word128
+type Int224 = BigInt  Int32 Word192
+type Int256 = BigInt Int128 Word128
+type Int512 = BigInt Int256 Word256
 
 
 -- | Large integers of fixed size represented as separate (signed) high and

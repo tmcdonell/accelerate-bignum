@@ -379,31 +379,29 @@ instance ( A.Integral a, A.FiniteBits a, A.FromIntegral a b, Exp a ~ Exp (Unsign
 
 
 
-{--
-instance A.FromIntegral (BigWord Word64 Word64) Word32 where
+instance A.FromIntegral Word128 Word32 where
   fromIntegral (unlift -> W2 (_::Exp Word64) lo) = A.fromIntegral lo
 
-instance A.FromIntegral Word32 (BigWord Word64 Word64) where
+instance A.FromIntegral Word32 Word128 where
   fromIntegral x = mkW2 0 (A.fromIntegral x)
 
-instance A.FromIntegral (BigWord Word64 Word64) Word64 where
+instance A.FromIntegral Word128 Word64 where
   fromIntegral (unlift -> W2 (_::Exp Word64) lo) = lo
 
-instance A.FromIntegral Word64 (BigWord Word64 Word64) where
+instance A.FromIntegral Word64 Word128 where
   fromIntegral x = mkW2 0 x
 
-instance A.FromIntegral (BigWord Word64 (BigWord Word64 Word64)) Word32 where
+instance A.FromIntegral Word192 Word32 where
   fromIntegral (unlift -> W2 (_::Exp Word64) lo) = A.fromIntegral lo
 
-instance A.FromIntegral Word32 (BigWord Word64 (BigWord Word64 Word64)) where
+instance A.FromIntegral Word32 Word192 where
   fromIntegral x = mkW2 0 (A.fromIntegral x)
 
-instance A.FromIntegral (BigWord Word64 Word64) (BigWord Word64 Word64) where
+instance A.FromIntegral Word128 Word128 where
   fromIntegral = id
 
-instance A.FromIntegral (BigWord (BigWord Word64 Word64) (BigWord Word64 Word64)) (BigWord (BigWord Word64 Word64) (BigWord Word64 Word64)) where
+instance A.FromIntegral Word256 Word256 where
   fromIntegral = id
---}
 
 
 type instance EltRepr (BigWord a b) = EltRepr (a,b)
