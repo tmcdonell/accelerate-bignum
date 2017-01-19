@@ -50,11 +50,13 @@ test-suite accelerate-bignum-test
   main-is:              Main.hs
   build-depends:
           base                          >= 4.8 && < 4.10
+        , accelerate                    >= 0.16
         , accelerate-bignum
         , tasty
         , tasty-quickcheck
 
   ghc-options:
+        -O2
         -Wall
         -threaded
         -rtsopts
