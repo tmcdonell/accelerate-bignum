@@ -45,8 +45,10 @@ import qualified Prelude                                            as P
 
 type BigWordCtx hi lo =
     ( Elt hi, Elt lo, Elt (BigWord hi lo)
-    , hi ~ Unsigned hi, Exp hi ~ Unsigned (Exp hi)
-    , lo ~ Unsigned lo, Exp lo ~ Unsigned (Exp lo)
+    , hi ~ Unsigned hi
+    , lo ~ Unsigned lo
+    , Exp hi ~ Unsigned (Exp hi)
+    , Exp lo ~ Unsigned (Exp lo)
     )
 
 mkW2 :: (Elt a, Elt b, Elt (BigWord a b)) => Exp a -> Exp b -> Exp (BigWord a b)
@@ -101,6 +103,7 @@ instance ( Num a
 instance ( Integral a, FiniteBits a, FromIntegral a b, Num2 (Exp a), Bounded a
          , Integral b, FiniteBits b, FromIntegral b a, Num2 (Exp b), Bounded b
          , Num (BigWord a b)
+         , Num2 (Exp (BigWord a b))
          , BigWordCtx a b
          )
     => P.Integral (Exp (BigWord a b)) where
@@ -254,15 +257,17 @@ instance ( Integral a, FiniteBits a, FromIntegral a b, Num2 (Exp a), Bounded a
 
 instance ( Integral a, FiniteBits a, FromIntegral a b, Num2 (Exp a)
          , Integral b, FiniteBits b, FromIntegral b a, Num2 (Exp b)
+         , Elt (Signed a)
+         , Elt (BigInt (Signed a) b)
+         , Exp (Signed a) ~ Signed (Exp a)
          , BigWordCtx a b
          )
     => Num2 (Exp (BigWord a b)) where
   type Signed   (Exp (BigWord a b)) = Exp (BigInt (Signed a) b)
   type Unsigned (Exp (BigWord a b)) = Exp (BigWord a b)
   --
-  -- signed w2 = let W2 hi lo = unlift w2  :: BigWord (Exp a) (Exp b)
-  --             in  mkI2 (signed hi) lo
-  unsigned  = id
+  signed (unlift -> W2 (hi::Exp a) lo) = mkI2 (signed hi) lo
+  unsigned = id
   --
   addWithCarry (unlift -> W2 xh xl) (unlift -> W2 yh yl) = (mkW2 0 w, mkW2 v u)
     where
