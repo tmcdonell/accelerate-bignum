@@ -1,6 +1,5 @@
 {-# LANGUAGE ConstraintKinds      #-}
 {-# LANGUAGE FlexibleContexts     #-}
-{-# LANGUAGE RankNTypes           #-}
 {-# LANGUAGE ScopedTypeVariables  #-}
 {-# LANGUAGE TypeFamilies         #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -138,7 +137,6 @@ instance ( Integral a, Ord a
 
 instance ( Integral a
          , Integral b, Bounded b
-         , Integral (BigInt a b)
          , Integral (BigWord (Unsigned a) b)
          , Num2 (BigInt a b)
          , Num2 (BigWord (Unsigned a) b)
