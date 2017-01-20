@@ -111,71 +111,71 @@ instance ( Integral a, FiniteBits a, FromIntegral a b, Num2 (Exp a), Bounded a
     where
       quotRem' :: BigWord (Exp a) (Exp b) -> BigWord (Exp a) (Exp b) -> Exp (BigWord a b, BigWord a b)
       quotRem' (W2 xh xl) (W2 yh yl)
-        = xh A.<  yh ? ( tup2 (0, x)
-        , xh A.== yh ? ( xl A.<  yl ? ( tup2 (0, x)
-                       , xl A.== yl ? ( tup2 (1, 0)
-                       , {- xl > yl -}  yh A.== 0 ? ( let (t2,t1) = quotRem xl yl
-                                                      in  lift (mkW2 0 t2, mkW2 0 t1)
-                                                    , tup2 (1, mkW2 0 (xl-yl))
-                                                    )
-                       ))
-        , {- xh > yh -}  yl A.== 0 ? ( let (t2,t1) = quotRem xh yh
-                                       in  lift (mkW2 0 (A.fromIntegral t2), W2 t1 xl)
-                       , yh A.== 0 A.&& yl A.== maxBound
-                                   ? ( let z       = A.fromIntegral xh
-                                           (t2,t1) = addWithCarry z xl
-                                       in
-                                       t2 A.== 0 ?
-                                         ( t1 A.== maxBound ?
-                                           ( tup2 ((mkW2 0 z) + 1, 0)
-                                           , tup2 (mkW2 0 z, mkW2 0 t1)
-                                           )
-                                         , t1 A.== maxBound ?
-                                           ( tup2 ((mkW2 0 z) + 2, 1)
-                                           , t1 A.== A.xor maxBound 1 ?
-                                               ( tup2 ((mkW2 0 z) + 2, 0)
-                                               , tup2 ((mkW2 0 z) + 1, mkW2 0 (t1+1))
-                                               )
-                                           )
-                                         )
-                       , yh A.== 0 ? ( let (t2,t1) = untup2 (div1 xh xl yl)
-                                       in  tup2 (t2, mkW2 0 t1)
-                       , {- otherwise -}
-                         let t1         = A.countLeadingZeros xh
-                             t2         = A.countLeadingZeros yh
-                             z          = A.shiftR xh (A.finiteBitSize (undefined::Exp a) - t2)
-                             u          = A.shiftL x t2
-                             v          = A.shiftL y t2
-                             W2 hhh hll = unlift u  :: BigWord (Exp a) (Exp b)
-                             W2 lhh lll = unlift v  :: BigWord (Exp a) (Exp b)
-                             -- -- z hhh hll / lhh lll
-                             (q1, r1)   = div2 z hhh lhh
-                             (t4, t3)   = mulWithCarry (A.fromIntegral q1) lll
-                             t5         = mkW2 (A.fromIntegral t4) t3
-                             t6         = mkW2 r1 hll
-                             (t8, t7)   = addWithCarry t6 v
-                             (t10, t9)  = addWithCarry t7 v
-                             loWord w   = let W2 _ l = unlift w :: BigWord (Exp a) (Exp b)
-                                          in  l
-                             qr2        = t5 A.> t6 ?
-                                            ( loWord t8 A.== 0 ?
-                                              ( t7 A.>= t5 ?
-                                                ( tup2 (q1-1, t7-t5)
-                                                , loWord t10 A.== 0 ?
-                                                  ( tup2 (q1-2, t9-t5)
-                                                  , tup2 (q1-2, (maxBound-t5) + t9 + 1)
-                                                  )
-                                                )
-                                              , tup2 (q1-1, (maxBound-t5) + t7 + 1)
+        = xh <  yh ? ( tup2 (0, x)
+        , xh == yh ? ( xl <  yl ? ( tup2 (0, x)
+                     , xl == yl ? ( tup2 (1, 0)
+                     , {-xl > yl -} yh == 0 ? ( let (t2,t1) = quotRem xl yl
+                                                in  lift (mkW2 0 t2, mkW2 0 t1)
+                                              , tup2 (1, mkW2 0 (xl-yl))
                                               )
-                                            , tup2 (q1, t6-t5)
+                     ))
+        ,{- xh > yh -} yl == 0 ? ( let (t2,t1) = quotRem xh yh
+                                   in  lift (mkW2 0 (fromIntegral t2), W2 t1 xl)
+                     , yh == 0 && yl == maxBound
+                               ? ( let z       = fromIntegral xh
+                                       (t2,t1) = addWithCarry z xl
+                                   in
+                                   t2 == 0 ?
+                                     ( t1 == maxBound ?
+                                       ( tup2 ((mkW2 0 z) + 1, 0)
+                                       , tup2 (mkW2 0 z, mkW2 0 t1)
+                                       )
+                                     , t1 == maxBound ?
+                                       ( tup2 ((mkW2 0 z) + 2, 1)
+                                       , t1 == xor maxBound 1 ?
+                                           ( tup2 ((mkW2 0 z) + 2, 0)
+                                           , tup2 ((mkW2 0 z) + 1, mkW2 0 (t1+1))
+                                           )
+                                       )
+                                     )
+                     , yh == 0 ? ( let (t2,t1) = untup2 (div1 xh xl yl)
+                                   in  tup2 (t2, mkW2 0 t1)
+                     , {- otherwise -}
+                       let t1         = countLeadingZeros xh
+                           t2         = countLeadingZeros yh
+                           z          = shiftR xh (finiteBitSize (undefined::Exp a) - t2)
+                           u          = shiftL x t2
+                           v          = shiftL y t2
+                           W2 hhh hll = unlift u  :: BigWord (Exp a) (Exp b)
+                           W2 lhh lll = unlift v  :: BigWord (Exp a) (Exp b)
+                           -- -- z hhh hll / lhh lll
+                           (q1, r1)   = div2 z hhh lhh
+                           (t4, t3)   = mulWithCarry (fromIntegral q1) lll
+                           t5         = mkW2 (fromIntegral t4) t3
+                           t6         = mkW2 r1 hll
+                           (t8, t7)   = addWithCarry t6 v
+                           (t10, t9)  = addWithCarry t7 v
+                           loWord w   = let W2 _ l = unlift w :: BigWord (Exp a) (Exp b)
+                                        in  l
+                           qr2        = t5 > t6 ?
+                                          ( loWord t8 == 0 ?
+                                            ( t7 >= t5 ?
+                                              ( tup2 (q1-1, t7-t5)
+                                              , loWord t10 == 0 ?
+                                                ( tup2 (q1-2, t9-t5)
+                                                , tup2 (q1-2, (maxBound-t5) + t9 + 1)
+                                                )
+                                              )
+                                            , tup2 (q1-1, (maxBound-t5) + t7 + 1)
                                             )
-                             (q2,r2)    = unlift qr2
-                         in
-                         t1 A.== t2 ? ( tup2 (1, x-y)
-                                      , lift (mkW2 0 (A.fromIntegral q2), A.shiftR r2 t2)
-                                      )
-                       )))
+                                          , tup2 (q1, t6-t5)
+                                          )
+                           (q2,r2)    = unlift qr2
+                       in
+                       t1 == t2 ? ( tup2 (1, x-y)
+                                  , lift (mkW2 0 (fromIntegral q2), shiftR r2 t2)
+                                  )
+                     )))
         ))
 
       -- TLM: This is really unfortunate that we can not share expressions
@@ -185,27 +185,27 @@ instance ( Integral a, FiniteBits a, FromIntegral a b, Num2 (Exp a), Bounded a
       div1 hhh hll by = go hhh hll 0
         where
           go :: Exp a -> Exp b -> Exp (BigWord a b) -> Exp (BigWord a b, b)
-          go h l c = uncurry3 after $ A.while (A.not . uncurry3 done) (uncurry3 body) (lift (h,l,c))
+          go h l c = uncurry3 after $ while (not . uncurry3 done) (uncurry3 body) (lift (h,l,c))
 
           (t2, t1)   = quotRem maxBound by
-          done h l _ = z A.== 0
+          done h l _ = z == 0
             where
-              h1        = A.fromIntegral h
+              h1        = fromIntegral h
               (t4, t3)  = mulWithCarry h1 (t1 + 1)
               (t6, _t5) = addWithCarry t3 l
               z         = t4 + t6
 
-          body h l c = lift (A.fromIntegral z, t5, c + (mkW2 (A.fromIntegral t8) t7))
+          body h l c = lift (fromIntegral z, t5, c + (mkW2 (fromIntegral t8) t7))
             where
-              h1        = A.fromIntegral h
+              h1        = fromIntegral h
               (t4, t3)  = mulWithCarry h1 (t1 + 1)
               (t6, t5)  = addWithCarry t3 l
               z         = t4 + t6
               (t8, t7)  = mulWithCarry h1 t2
 
-          after h l c = lift (c + mkW2 (A.fromIntegral t8) t7 + mkW2 0 t10, t9)
+          after h l c = lift (c + mkW2 (fromIntegral t8) t7 + mkW2 0 t10, t9)
             where
-              h1        = A.fromIntegral h
+              h1        = fromIntegral h
               (_t4, t3) = mulWithCarry h1 (t1 + 1)
               (_t6, t5) = addWithCarry t3 l
               (t8, t7)  = mulWithCarry h1 t2
@@ -216,12 +216,12 @@ instance ( Integral a, FiniteBits a, FromIntegral a b, Num2 (Exp a), Bounded a
       div2 hhh hll by = go hhh hll (tup2 (0,0))
         where
           go :: Exp a -> Exp a -> Exp (a,a) -> (Exp a, Exp a)
-          go h l c = uncurry3 after $ A.while (A.not . uncurry3 done) (uncurry3 body) (lift (h,l,c))
+          go h l c = uncurry3 after $ while (not . uncurry3 done) (uncurry3 body) (lift (h,l,c))
 
           (t2, t1) = quotRem maxBound by
 
           done :: Exp a -> Exp a -> Exp (a,a) -> Exp Bool
-          done h l _ = z A.== 0
+          done h l _ = z == 0
             where
               (t4, t3)  = mulWithCarry h (t1 + 1)
               (t6, _t5) = addWithCarry t3 l
@@ -236,7 +236,7 @@ instance ( Integral a, FiniteBits a, FromIntegral a b, Num2 (Exp a), Bounded a
               (t8, t7)  = mulWithCarry h t2
 
           after :: Exp a -> Exp a -> Exp (a,a) -> (Exp a, Exp a)
-          after h l c = (A.snd q, t9)
+          after h l c = (snd q, t9)
             where
               (_t4, t3) = mulWithCarry h (t1 + 1)
               (_t6, t5) = addWithCarry t3 l
