@@ -100,7 +100,7 @@ instance (Eq a, Eq b) => Eq (BigWord a b) where
   W2 xh xl /= W2 yh yl = xh /= yh || xl /= yl
 
 
-instance (Num a, Ord a, Integral b, Bounded b, Num2 b, BigWordCtx a b)
+instance (Num a, Eq a, Integral b, Bounded b, Num2 b, BigWordCtx a b)
     => Num (BigWord a b) where
   negate (W2 hi lo)
     | lo == 0         = W2 (negate hi)     0
@@ -239,8 +239,8 @@ instance ( Integral a, FiniteBits a, Num2 a, Bounded a
                 in  (lhh + llh + t4', t3')
 
 
-instance ( Integral a, Ord a, FiniteBits a, Num2 a
-         , Integral b, Ord b, FiniteBits b, Num2 b
+instance ( Integral a, FiniteBits a, Num2 a
+         , Integral b, FiniteBits b, Num2 b
          , BigWordCtx a b
          )
     => Num2 (BigWord a b) where
