@@ -63,6 +63,8 @@ main = do
           ]
         , testMainAcc (Proxy::Proxy Word96)
         , testMainAcc (Proxy::Proxy Word128)
+        , testMainAcc (Proxy::Proxy Int96)
+        , testMainAcc (Proxy::Proxy Int128)
         ]
       ]
 
@@ -388,6 +390,10 @@ instance Elt a => Iso a (Scalar a) where
 instance (Arbitrary a, Arbitrary b) => Arbitrary (BigWord a b) where
   arbitrary         = W2 <$> arbitrary <*> arbitrary
   shrink (W2 hi lo) = [ W2 hi' lo' | (hi',lo') <- shrink (hi,lo) ]
+
+instance (Arbitrary a, Arbitrary b) => Arbitrary (BigInt a b) where
+  arbitrary         = I2 <$> arbitrary <*> arbitrary
+  shrink (I2 hi lo) = [ I2 hi' lo' | (hi',lo') <- shrink (hi,lo) ]
 
 
 {-# INLINE prop_unary_acc #-}
