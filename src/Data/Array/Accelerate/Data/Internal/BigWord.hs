@@ -1,3 +1,4 @@
+{-# LANGUAGE ConstraintKinds      #-}
 {-# LANGUAGE FlexibleContexts     #-}
 {-# LANGUAGE ScopedTypeVariables  #-}
 {-# LANGUAGE TypeFamilies         #-}
@@ -17,6 +18,12 @@
 --  * https://github.com/mvv/data-bword
 --  * https://github.com/mvv/data-dword
 --
+
+-- TLM: This generic setup allows us to define instances recursively, but for
+--      better performance in pure Haskell, specialised instances with unpacked
+--      fields (esp for >128 bits) would probably be better. This makes no
+--      difference for Accelerate though which is unboxed and hyper strict.
+
 
 module Data.Array.Accelerate.Data.Internal.BigWord (
 
@@ -52,12 +59,8 @@ type Word512 = BigWord Word256 Word256
 -- | Large word of fixed size represented as separate high and low (unsigned)
 -- words.
 --
-data BigWord hi lo = W2 !hi !lo
-
--- TLM: This generic setup allows us to define instances recursively, but for
---      better performance in pure Haskell, specialised instances with unpacked
---      fields (esp for >128 bits) would probably be better. This makes no
---      difference for Accelerate though which is unboxed and hyper strict.
+data BigWord    hi lo = W2 !hi !lo
+type BigWordCtx hi lo = (hi ~ Unsigned hi, lo ~ Unsigned lo)
 
 
 instance Integral (BigWord a b) => Show (BigWord a b) where
@@ -85,9 +88,19 @@ instance (Num a, Enum a, Bits a, Num b, Enum b, Bounded b, Eq b)
   fromEnum _          = error "Enum.fromEnum: bad value"
 
 
-instance ( Num a, Ord a,                  a ~ Unsigned a
-         , Integral b, Bounded b, Num2 b, b ~ Unsigned b
-         )
+instance (Ord a, Ord b) => Ord (BigWord a b) where
+  compare (W2 xh xl) (W2 yh yl) =
+    case compare xh yh of
+      EQ -> compare xl yl
+      r  -> r
+
+
+instance (Eq a, Eq b) => Eq (BigWord a b) where
+  W2 xh xl == W2 yh yl = xh == yh && xl == yl
+  W2 xh xl /= W2 yh yl = xh /= yh || xl /= yl
+
+
+instance (Num a, Ord a, Integral b, Bounded b, Num2 b, BigWordCtx a b)
     => Num (BigWord a b) where
   negate (W2 hi lo)
     | lo == 0         = W2 (negate hi)     0
@@ -114,27 +127,14 @@ instance ( Num a, Ord a,                  a ~ Unsigned a
       (hi,lo) = x `divMod` (toInteger (maxBound :: b) + 1)
 
 
-instance (Ord a, Ord b) => Ord (BigWord a b) where
-  compare (W2 xh xl) (W2 yh yl) =
-    case compare xh yh of
-      EQ -> compare xl yl
-      r  -> r
-
-
-instance (Eq a, Eq b) => Eq (BigWord a b) where
-  W2 xh xl == W2 yh yl = xh == yh && xl == yl
-  W2 xh xl /= W2 yh yl = xh /= yh || xl /= yl
-
-
-instance ( Integral a, FiniteBits a, Num2 a, Bounded a, a ~ Unsigned a
-         , Integral b, FiniteBits b, Num2 b, Bounded b, b ~ Unsigned b
-         )
+instance (Integral (BigWord a b), Num (BigWord a b), Ord (BigWord a b))
     => Real (BigWord a b) where
   toRational x = toInteger x % 1
 
 
-instance ( Integral a, FiniteBits a, Num2 a, Bounded a, a ~ Unsigned a
-         , Integral b, FiniteBits b, Num2 b, Bounded b, b ~ Unsigned b
+instance ( Integral a, FiniteBits a, Num2 a, Bounded a
+         , Integral b, FiniteBits b, Num2 b, Bounded b
+         , BigWordCtx a b
          )
     => Integral (BigWord a b) where
   toInteger (W2 hi lo) =
@@ -239,8 +239,9 @@ instance ( Integral a, FiniteBits a, Num2 a, Bounded a, a ~ Unsigned a
                 in  (lhh + llh + t4', t3')
 
 
-instance ( Integral a, Ord a, FiniteBits a, Num2 a, a ~ Unsigned a
-         , Integral b, Ord b, FiniteBits b, Num2 b, b ~ Unsigned b
+instance ( Integral a, Ord a, FiniteBits a, Num2 a
+         , Integral b, Ord b, FiniteBits b, Num2 b
+         , BigWordCtx a b
          )
     => Num2 (BigWord a b) where
   type Signed   (BigWord a b) = BigInt (Signed a) b
@@ -274,8 +275,9 @@ instance ( Integral a, Ord a, FiniteBits a, Num2 a, a ~ Unsigned a
       z          = finiteBitSize (undefined::b) - y
 
 
-instance ( Integral a, FiniteBits a, a ~ Unsigned a
-         , Integral b, FiniteBits b, b ~ Unsigned b
+instance ( Integral a, FiniteBits a
+         , Integral b, FiniteBits b
+         , BigWordCtx a b
          )
     => Bits (BigWord a b) where
   isSigned _   = False
@@ -346,8 +348,9 @@ instance ( Integral a, FiniteBits a, a ~ Unsigned a
   popCount (W2 hi lo) = popCount hi + popCount lo
 
 
-instance ( Integral a, FiniteBits a, a ~ Unsigned a
-         , Integral b, FiniteBits b, b ~ Unsigned b
+instance ( Integral a, FiniteBits a
+         , Integral b, FiniteBits b
+         , BigWordCtx a b
          )
     => FiniteBits (BigWord a b) where
   finiteBitSize _ = finiteBitSize (undefined::a)

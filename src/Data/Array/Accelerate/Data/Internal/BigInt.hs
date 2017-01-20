@@ -1,4 +1,6 @@
+{-# LANGUAGE ConstraintKinds      #-}
 {-# LANGUAGE FlexibleContexts     #-}
+{-# LANGUAGE RankNTypes           #-}
 {-# LANGUAGE ScopedTypeVariables  #-}
 {-# LANGUAGE TypeFamilies         #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -54,7 +56,9 @@ type Int512 = BigInt Int256 Word256
 -- | Large integers of fixed size represented as separate (signed) high and
 -- (unsigned) low words.
 --
-data BigInt hi lo = I2 !hi !lo
+data BigInt    hi lo = I2 !hi !lo
+type BigIntCtx hi lo = (hi ~ Signed hi, lo ~ Unsigned lo, Signed (Unsigned hi) ~ hi)
+
 
 instance Integral (BigInt a b) => Show (BigInt a b) where
   show = show . toInteger
@@ -65,9 +69,7 @@ instance (Bounded a, Bounded b) => Bounded (BigInt a b) where
   maxBound = I2 maxBound maxBound
 
 
-instance ( Enum a, Num a, Eq a
-         , Enum b, Num b, Eq b, Bounded b
-         )
+instance (Enum a, Num a, Eq a, Enum b, Num b, Eq b, Bounded b)
     => Enum (BigInt a b) where
   succ (I2 hi lo)
     | lo == maxBound    = I2 (succ hi) minBound
@@ -98,11 +100,14 @@ instance (Eq a, Eq b) => Eq (BigInt a b) where
   I2 xh xl /= I2 yh yl = xh /= yh || xl /= yl
 
 
-instance ( Integral a,            FiniteBits a, Num a, Ord a,       Num2 a, a ~ Signed a,   a ~ Signed c
-         , Integral b, Bounded b, FiniteBits b, Num b, Ord b, Eq b, Num2 b, b ~ Unsigned b
-         , Integral c, Bounded c, FiniteBits c,                     Num2 c, c ~ Unsigned a, c ~ Unsigned c
-         , Num (BigWord c b), Num2 (BigWord c b)
-         , Integral (Signed b), Bits (Signed b)
+instance ( Integral a, Ord a
+         , Integral b, Ord b, Bounded b
+         , Ord (BigInt a b)
+         , Num (BigInt a b)
+         , Num2 (BigInt a b)
+         , Num  (BigWord (Unsigned a) b)
+         , Num2 (BigWord (Unsigned a) b)
+         , BigIntCtx a b
          )
     => Num (BigInt a b) where
   negate (I2 hi lo)
@@ -131,10 +136,13 @@ instance ( Integral a,            FiniteBits a, Num a, Ord a,       Num2 a, a ~ 
       (hi,lo) = x `divMod` (toInteger (maxBound::b) + 1)
 
 
-instance ( Integral a,            FiniteBits a, Num2 a, a ~ Signed a,   a ~ Signed c
-         , Integral b, Bounded b, FiniteBits b, Num2 b, b ~ Unsigned b
-         , Integral c, Bounded c, FiniteBits c, Num2 c, c ~ Unsigned a, c ~ Unsigned c
-         , Integral (Signed b), Bits (Signed b)
+instance ( Integral a
+         , Integral b, Bounded b
+         , Integral (BigInt a b)
+         , Integral (BigWord (Unsigned a) b)
+         , Num2 (BigInt a b)
+         , Num2 (BigWord (Unsigned a) b)
+         , BigIntCtx a b
          )
     => Integral (BigInt a b) where
   toInteger (I2 hi lo) =
@@ -180,21 +188,23 @@ instance ( Integral a,            FiniteBits a, Num2 a, a ~ Signed a,   a ~ Sign
                   in  (signed q, signed r)
 
 
-instance ( Integral a, Num a, Ord a,    FiniteBits a, Num2 a, a ~ Signed a,   a ~ Signed c
-         , Integral b, Bounded b, Eq b, FiniteBits b, Num2 b, b ~ Unsigned b
-         , Integral c, Bounded c,       FiniteBits c, Num2 c, c ~ Unsigned a, c ~ Unsigned c
-         , Num2 (BigWord c b)
-         , Integral (Signed b), Bits (Signed b)
-         )
+instance (Integral (BigInt a b), Num (BigInt a b), Ord (BigInt a b))
     => Real (BigInt a b) where
   toRational x = toInteger x % 1
 
 
-instance ( Integral a, Num a, Ord a,      FiniteBits a, Num2 a, a ~ Signed a,   a ~ Signed c
-         , Integral b, Bounded b, Eq b,   FiniteBits b, Num2 b, b ~ Unsigned b
-         , Integral c, Bounded c, Bits c, FiniteBits c, Num2 c, c ~ Unsigned a, c ~ Unsigned c
-         , Num2 (BigWord c b)
-         , Integral (Signed b), Bits (Signed b)
+instance ( Ord a
+         , Num a
+         , Num2 a
+         , Num (BigInt a b)
+         , Ord (BigInt a b)
+         , Num2 (BigInt a b)
+         , Bits (BigInt a b)
+         , Num  (BigWord (Unsigned a) b)
+         , Num2 (BigWord (Unsigned a) b)
+         , Bounded (BigWord (Unsigned a) b)
+         , BigIntCtx a b
+         , Unsigned (Unsigned a) ~ Unsigned a
          )
     => Num2 (BigInt a b) where
   type Signed   (BigInt a b) = BigInt (Signed a) b
@@ -225,10 +235,14 @@ instance ( Integral a, Num a, Ord a,      FiniteBits a, Num2 a, a ~ Signed a,   
                            else t4
 
 
-instance ( Integral a,            FiniteBits a, Num2 a, a ~ Signed a,   a ~ Signed c
-         , Integral b, Bounded b, FiniteBits b, Num2 b, b ~ Unsigned b
-         , Integral c, Bounded c, FiniteBits c, Num2 c, c ~ Unsigned a, c ~ Unsigned c
+instance ( FiniteBits a, Integral a
+         , FiniteBits b, Integral b
+         , FiniteBits (BigInt a b)
+         , Num2 (BigInt a b)
+         , Num2 (BigWord (Unsigned a) b)
+         , Bits (BigWord (Unsigned a) b)
          , Integral (Signed b), Bits (Signed b)
+         , BigIntCtx a b
          )
     => Bits (BigInt a b) where
   isSigned _   = True
@@ -291,11 +305,12 @@ instance ( Integral a,            FiniteBits a, Num2 a, a ~ Signed a,   a ~ Sign
   popCount (I2 hi lo) = popCount hi + popCount lo
 
 
-
-instance ( Integral a,            FiniteBits a, Num2 a, a ~ Signed a,   a ~ Signed c
-         , Integral b, Bounded b, FiniteBits b, Num2 b, b ~ Unsigned b
-         , Integral c, Bounded c, FiniteBits c, Num2 c, c ~ Unsigned a, c ~ Unsigned c
-         , Integral (Signed b), Bits (Signed b)
+instance ( FiniteBits a
+         , FiniteBits b
+         , Bits (BigInt a b)
+         , Num2 (BigInt a b)
+         , FiniteBits (BigWord (Unsigned a) b)
+         , BigIntCtx a b
          )
     => FiniteBits (BigInt a b) where
   finiteBitSize _ = finiteBitSize (undefined::a)
