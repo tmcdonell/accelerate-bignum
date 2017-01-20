@@ -263,7 +263,7 @@ instance ( FiniteBits a, Integral a
       hi' = shiftR hi x
       lo' | y >= 0    = shiftL (fromIntegral hi) y .|. shiftR lo x
           | otherwise = z
-
+      --
       y = finiteBitSize (undefined::b) - x
       z = fromIntegral (shiftR (fromIntegral hi :: Signed b) (negate y))
 
