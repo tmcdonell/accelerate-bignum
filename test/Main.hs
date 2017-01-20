@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleInstances      #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses  #-}
+{-# LANGUAGE PolyKinds              #-}
 {-# LANGUAGE ScopedTypeVariables    #-}
 {-# LANGUAGE TypeFamilies           #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
@@ -16,6 +17,7 @@ import Data.Typeable
 import Data.Word
 import Test.Tasty
 import Test.Tasty.QuickCheck                                        hiding ( (.&.) )
+import Text.Printf
 
 import Data.Array.Accelerate.Data.BigInt
 import Data.Array.Accelerate.Data.BigWord
@@ -78,13 +80,13 @@ testNum2 t = testGroup (show (typeRep t))
   ]
 
 testMain
-    :: ( Iso a b, Arbitrary a, Typeable b, Show a
+    :: ( Iso a b, Arbitrary a, Show a, Show (ArgType b)
        , Ord a, Bounded a, Real a, Integral a, FiniteBits a
        , Ord b, Bounded b, Real b, Integral b, FiniteBits b
        )
     => proxy b
     -> TestTree
-testMain t = testGroup (show (typeRep t))
+testMain t = testGroup (showType t)
   [ testProperty "iso" $ prop_iso t
   , testGroup "Eq"
     [ testProperty "(==)" $ prop_eq t
@@ -159,13 +161,13 @@ testNum2Acc t = testGroup (show (typeRep t))
   ]
 
 testMainAcc
-    :: ( Arbitrary a
+    :: ( Arbitrary a, Show (ArgType a)
        ,   Ord a,   Integral a,   Bounded a,   FiniteBits a
        , A.Ord a, A.Integral a, A.Bounded a, A.FiniteBits a
        )
     => proxy a
     -> TestTree
-testMainAcc t = testGroup (show (typeRep t))
+testMainAcc t = testGroup (showType t)
   [ testGroup "Eq"
     [ testProperty "(==)" $ prop_eq' t
     , testProperty "(/=)" $ prop_neq' t
@@ -520,4 +522,16 @@ prop_popCount' = prop_unary_acc popCount A.popCount
 prop_clz', prop_ctz' :: (FiniteBits a, A.FiniteBits a) => proxy a -> a -> Bool
 prop_clz' = prop_unary_acc countLeadingZeros  A.countLeadingZeros
 prop_ctz' = prop_unary_acc countTrailingZeros A.countTrailingZeros
+
+
+data ArgType (a :: k) = AT
+
+showType :: forall proxy a. Show (ArgType a) => proxy a -> String
+showType _ = show (AT :: ArgType a)
+
+instance FiniteBits (BigWord a b) => Show (ArgType (BigWord a b)) where
+  show _ = printf "Word%d" (finiteBitSize (undefined::BigWord a b))
+
+instance FiniteBits (BigInt a b) => Show (ArgType (BigInt a b)) where
+  show _ = printf "Int%d" (finiteBitSize (undefined::BigInt a b))
 
