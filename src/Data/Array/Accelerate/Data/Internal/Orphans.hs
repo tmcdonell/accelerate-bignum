@@ -742,23 +742,27 @@ instance FromIntegral Word128 Int32 where
   fromIntegral (unlift -> W2 (_::Exp Word64) lo) = fromIntegral lo
 
 instance FromIntegral Int32 Int128 where
-  fromIntegral x =
-    if x < 0 then mkI2 (-1) (fromIntegral x)
-             else mkI2 0    (fromIntegral x)
+  fromIntegral x@(fromIntegral -> x') =
+    if x < 0 then mkI2 (-1) x'
+             else mkI2 0    x'
 
 instance FromIntegral Int32 Word128 where
-  fromIntegral = mkW2 0 . fromIntegral
+  fromIntegral x@(fromIntegral -> x') =
+    if x < 0 then mkW2 maxBound x'
+             else mkW2 0        x'
 
 instance FromIntegral Word128 Int64 where
   fromIntegral (unlift -> W2 (_::Exp Word64) lo) = fromIntegral lo
 
 instance FromIntegral Int64 Int128 where
-  fromIntegral x =
-    if x < 0 then mkI2 (-1) (fromIntegral x)
-             else mkI2 0    (fromIntegral x)
+  fromIntegral x@(fromIntegral -> x') =
+    if x < 0 then mkI2 (-1) x'
+             else mkI2 0    x'
 
 instance FromIntegral Int64 Word128 where
-  fromIntegral = mkW2 0 . fromIntegral
+  fromIntegral x@(fromIntegral -> x') =
+    if x < 0 then mkW2 maxBound x'
+             else mkW2 0        x'
 
 instance FromIntegral Int192 Word192 where
   fromIntegral (unlift -> I2 hi lo) = mkW2 (fromIntegral hi) lo
@@ -767,12 +771,14 @@ instance FromIntegral Word192 Int32 where
   fromIntegral (unlift -> W2 (_::Exp Word64) lo) = fromIntegral lo
 
 instance FromIntegral Int32 Int192 where
-  fromIntegral x =
-    if x < 0 then mkI2 (-1) (fromIntegral x)
-             else mkI2 0    (fromIntegral x)
+  fromIntegral x@(fromIntegral -> x') =
+    if x < 0 then mkI2 (-1) x'
+             else mkI2 0    x'
 
 instance FromIntegral Int32 Word192 where
-  fromIntegral = mkW2 0 . fromIntegral
+  fromIntegral x@(fromIntegral -> x') =
+    if x < 0 then mkW2 maxBound x'
+             else mkW2 0        x'
 
 instance FromIntegral Int128 Int128 where
   fromIntegral = id
