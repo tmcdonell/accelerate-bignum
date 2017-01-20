@@ -13,7 +13,6 @@ module Main where
 import Data.Bits
 import Data.Int
 import Data.Proxy
-import Data.Typeable
 import Data.Word
 import Test.Tasty
 import Test.Tasty.QuickCheck                                        hiding ( (.&.) )
@@ -63,6 +62,24 @@ main = do
           , testNum2Acc (Proxy::Proxy Int32)
           , testNum2Acc (Proxy::Proxy Int64)
           ]
+        , testGroup "FromIntegral"
+          [ testFromIntegral (Proxy::Proxy Int32)  (Proxy::Proxy Int128)
+          , testFromIntegral (Proxy::Proxy Int32)  (Proxy::Proxy Int192)
+          , testFromIntegral (Proxy::Proxy Int32)  (Proxy::Proxy Word128)
+          , testFromIntegral (Proxy::Proxy Int32)  (Proxy::Proxy Word192)
+          , testFromIntegral (Proxy::Proxy Int64)  (Proxy::Proxy Int128)
+          , testFromIntegral (Proxy::Proxy Int64)  (Proxy::Proxy Int192)
+          , testFromIntegral (Proxy::Proxy Int64)  (Proxy::Proxy Word128)
+          , testFromIntegral (Proxy::Proxy Int64)  (Proxy::Proxy Word192)
+          , testFromIntegral (Proxy::Proxy Word32) (Proxy::Proxy Int128)
+          , testFromIntegral (Proxy::Proxy Word32) (Proxy::Proxy Int192)
+          , testFromIntegral (Proxy::Proxy Word32) (Proxy::Proxy Word128)
+          , testFromIntegral (Proxy::Proxy Word32) (Proxy::Proxy Word192)
+          , testFromIntegral (Proxy::Proxy Word64) (Proxy::Proxy Int128)
+          , testFromIntegral (Proxy::Proxy Word64) (Proxy::Proxy Int192)
+          , testFromIntegral (Proxy::Proxy Word64) (Proxy::Proxy Word128)
+          , testFromIntegral (Proxy::Proxy Word64) (Proxy::Proxy Word192)
+          ]
         , testMainAcc (Proxy::Proxy Word96)
         , testMainAcc (Proxy::Proxy Word128)
         , testMainAcc (Proxy::Proxy Int96)
@@ -71,10 +88,10 @@ main = do
       ]
 
 testNum2
-    :: (Typeable a, Show a, Num2 a, FiniteBits (Unsigned a), Integral a, Integral (Unsigned a), Bounded a)
+    :: (Show (ArgType a), Show a, Num2 a, FiniteBits (Unsigned a), Integral a, Integral (Unsigned a), Bounded a)
     => proxy a
     -> TestTree
-testNum2 t = testGroup (show (typeRep t))
+testNum2 t = testGroup (showType t)
   [ testProperty "addWithCarry" $ prop_addWithCarry t
   , testProperty "mulWithCarry" $ prop_mulWithCarry t
   ]
@@ -149,16 +166,24 @@ testMain t = testGroup (showType t)
   ]
 
 testNum2Acc
-    :: ( Bounded a, Integral a, Integral (Unsigned a), FiniteBits (Unsigned a)
+    :: ( Show (ArgType a), Bounded a, Integral a, Integral (Unsigned a), FiniteBits (Unsigned a)
        , Elt a, Elt (Unsigned a), Num2 (Exp a)
        , Lift Exp (Unsigned (Exp a)), Plain (Unsigned (Exp a)) ~ Unsigned a
        )
     => proxy a
     -> TestTree
-testNum2Acc t = testGroup (show (typeRep t))
+testNum2Acc t = testGroup (showType t)
   [ testProperty "addWithCarry" $ prop_addWithCarry' t
   , testProperty "mulWithCarry" $ prop_mulWithCarry' t
   ]
+
+testFromIntegral
+    :: (Show (ArgType a), Show (ArgType b), Arbitrary a, Integral a, Num b, Eq b, A.Integral a, A.Num b, A.FromIntegral a b)
+    => proxy a
+    -> proxy b
+    -> TestTree
+testFromIntegral ta tb =
+  testProperty (printf "%s->%s" (showType ta) (showType tb)) $ prop_fromIntegral ta tb
 
 testMainAcc
     :: ( Arbitrary a, Show (ArgType a)
@@ -230,7 +255,6 @@ prop_mulWithCarry _ (Large x) (Large y) = uncurry toInteger2 (mulWithCarry x y) 
 
 toInteger2 :: (Integral a, Integral b, FiniteBits b) => a -> b -> Integer
 toInteger2 h l = toInteger h * 2 ^ finiteBitSize l + toInteger l
-
 
 prop_iso :: (Iso a b, Eq a) => proxy b -> a -> Bool
 prop_iso t x = isoL (toIso t x) == x
@@ -454,6 +478,14 @@ prop_addWithCarry', prop_mulWithCarry'
 prop_addWithCarry' t (Large x) (Large y) = uncurry toInteger2 (with_binary_acc t (A.lift $$ addWithCarry) x y) == toInteger x + toInteger y
 prop_mulWithCarry' t (Large x) (Large y) = uncurry toInteger2 (with_binary_acc t (A.lift $$ mulWithCarry) x y) == toInteger x * toInteger y
 
+prop_fromIntegral
+    :: forall proxy a b. (Integral a, Num b, Eq b, A.Integral a, A.Num b, A.FromIntegral a b)
+    => proxy a
+    -> proxy b
+    -> a
+    -> Bool
+prop_fromIntegral a _ = prop_unary_acc fromIntegral (A.fromIntegral :: Exp a -> Exp b) a
+
 prop_eq', prop_neq' :: (Eq a, A.Eq a) => proxy a -> a -> a -> Bool
 prop_eq'  = prop_binary_acc (==) (A.==)
 prop_neq' = prop_binary_acc (/=) (A./=)
@@ -524,7 +556,7 @@ prop_clz' = prop_unary_acc countLeadingZeros  A.countLeadingZeros
 prop_ctz' = prop_unary_acc countTrailingZeros A.countTrailingZeros
 
 
-data ArgType (a :: k) = AT
+data ArgType (a :: *) = AT
 
 showType :: forall proxy a. Show (ArgType a) => proxy a -> String
 showType _ = show (AT :: ArgType a)
@@ -534,4 +566,13 @@ instance FiniteBits (BigWord a b) => Show (ArgType (BigWord a b)) where
 
 instance FiniteBits (BigInt a b) => Show (ArgType (BigInt a b)) where
   show _ = printf "Int%d" (finiteBitSize (undefined::BigInt a b))
+
+instance Show (ArgType Int8)   where show _ = "Int8"
+instance Show (ArgType Int16)  where show _ = "Int16"
+instance Show (ArgType Int32)  where show _ = "Int32"
+instance Show (ArgType Int64)  where show _ = "Int64"
+instance Show (ArgType Word8)  where show _ = "Word8"
+instance Show (ArgType Word16) where show _ = "Word16"
+instance Show (ArgType Word32) where show _ = "Word32"
+instance Show (ArgType Word64) where show _ = "Word64"
 

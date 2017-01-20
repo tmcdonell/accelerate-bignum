@@ -396,26 +396,54 @@ instance ( Integral a, FiniteBits a, FromIntegral a b
       wsib  = finiteBitSize (undefined::Exp b)
 
 
+-- Conversions to higher bit-widths
 
-instance FromIntegral Word128 Word32 where
-  fromIntegral (unlift -> W2 (_::Exp Word64) lo) = fromIntegral lo
+instance FromIntegral Word32 Int128 where
+  fromIntegral x = mkI2 0 (fromIntegral x)
 
 instance FromIntegral Word32 Word128 where
   fromIntegral x = mkW2 0 (fromIntegral x)
 
-instance FromIntegral Word128 Word64 where
-  fromIntegral (unlift -> W2 (_::Exp Word64) lo) = lo
+instance FromIntegral Word32 Int192 where
+  fromIntegral x = mkI2 0 (mkW2 0 (fromIntegral x))
+
+instance FromIntegral Word32 Word192 where
+  fromIntegral x = mkW2 0 (mkW2 0 (fromIntegral x))
+
+instance FromIntegral Word64 Int128 where
+  fromIntegral x = mkI2 0 x
 
 instance FromIntegral Word64 Word128 where
   fromIntegral x = mkW2 0 x
 
+instance FromIntegral Word64 Int192 where
+  fromIntegral x = mkI2 0 (mkW2 0 x)
+
+instance FromIntegral Word64 Word192 where
+  fromIntegral x = mkW2 0 (mkW2 0 x)
+
+
+-- Conversions to lower bit-widths (lossy)
+
+instance FromIntegral Word128 Word32 where
+  fromIntegral (unlift -> W2 (_::Exp Word64) lo) = fromIntegral lo
+
+instance FromIntegral Word128 Word64 where
+  fromIntegral (unlift -> W2 (_::Exp Word64) lo) = lo
+
 instance FromIntegral Word192 Word32 where
   fromIntegral (unlift -> W2 (_::Exp Word64) lo) = fromIntegral lo
 
-instance FromIntegral Word32 Word192 where
-  fromIntegral x = mkW2 0 (fromIntegral x)
+instance FromIntegral Word192 Word64 where
+  fromIntegral (unlift -> W2 (_::Exp Word64) lo) = fromIntegral lo
+
+
+-- Conversions at the same bit width
 
 instance FromIntegral Word128 Word128 where
+  fromIntegral = id
+
+instance FromIntegral Word192 Word192 where
   fromIntegral = id
 
 instance FromIntegral Word256 Word256 where
@@ -691,11 +719,7 @@ instance ( Ord a
                            else t4
 
 
-instance FromIntegral Int128 Word128 where
-  fromIntegral (unlift -> I2 hi lo) = mkW2 (fromIntegral hi) lo
-
-instance FromIntegral Word128 Int32 where
-  fromIntegral (unlift -> W2 (_::Exp Word64) lo) = fromIntegral lo
+-- Conversions to higher bit-widths
 
 instance FromIntegral Int32 Int128 where
   fromIntegral x@(fromIntegral -> x') =
@@ -707,8 +731,15 @@ instance FromIntegral Int32 Word128 where
     if x < 0 then mkW2 maxBound x'
              else mkW2 0        x'
 
-instance FromIntegral Word128 Int64 where
-  fromIntegral (unlift -> W2 (_::Exp Word64) lo) = fromIntegral lo
+instance FromIntegral Int32 Int192 where
+  fromIntegral x@(fromIntegral -> x') =
+    if x < 0 then mkI2 (-1) x'
+             else mkI2 0    x'
+
+instance FromIntegral Int32 Word192 where
+  fromIntegral x@(fromIntegral -> x') =
+    if x < 0 then mkW2 maxBound x'
+             else mkW2 0        x'
 
 instance FromIntegral Int64 Int128 where
   fromIntegral x@(fromIntegral -> x') =
@@ -720,21 +751,39 @@ instance FromIntegral Int64 Word128 where
     if x < 0 then mkW2 maxBound x'
              else mkW2 0        x'
 
-instance FromIntegral Int192 Word192 where
-  fromIntegral (unlift -> I2 hi lo) = mkW2 (fromIntegral hi) lo
-
-instance FromIntegral Word192 Int32 where
-  fromIntegral (unlift -> W2 (_::Exp Word64) lo) = fromIntegral lo
-
-instance FromIntegral Int32 Int192 where
+instance FromIntegral Int64 Int192 where
   fromIntegral x@(fromIntegral -> x') =
     if x < 0 then mkI2 (-1) x'
              else mkI2 0    x'
 
-instance FromIntegral Int32 Word192 where
+instance FromIntegral Int64 Word192 where
   fromIntegral x@(fromIntegral -> x') =
     if x < 0 then mkW2 maxBound x'
              else mkW2 0        x'
+
+
+-- Conversions to lower bit-widths (lossy)
+
+instance FromIntegral Word128 Int32 where
+  fromIntegral (unlift -> W2 (_::Exp Word64) lo) = fromIntegral lo
+
+instance FromIntegral Word128 Int64 where
+  fromIntegral (unlift -> W2 (_::Exp Word64) lo) = fromIntegral lo
+
+instance FromIntegral Word192 Int32 where
+  fromIntegral (unlift -> W2 (_::Exp Word64) lo) = fromIntegral lo
+
+instance FromIntegral Word192 Int64 where
+  fromIntegral (unlift -> W2 (_::Exp Word64) lo) = fromIntegral lo
+
+
+-- Signed/Unsigned conversions at the same width
+
+instance FromIntegral Int128 Word128 where
+  fromIntegral (unlift -> I2 hi lo) = mkW2 (fromIntegral hi) lo
+
+instance FromIntegral Int192 Word192 where
+  fromIntegral (unlift -> I2 hi lo) = mkW2 (fromIntegral hi) lo
 
 instance FromIntegral Int128 Int128 where
   fromIntegral = id
