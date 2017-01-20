@@ -514,50 +514,6 @@ instance ( Num a, Ord a
   fromInteger = constant . fromInteger
 
 
-{--
-instance ( P.Integral a, P.FiniteBits a,              Num2 a, Num a,                        Ord a,                                       a ~ Signed a,   a ~ Signed c,   Exp a ~ Signed (Exp c)
-         , P.Integral b, P.FiniteBits b, P.Bounded b, Num2 b, Integral b, FromIntegral b c, Bounded b, FiniteBits b, Eq b, Num2 (Exp b), b ~ Unsigned b,                 Exp b ~ Unsigned (Exp b)
-         , P.Integral c, P.FiniteBits c, P.Bounded c, Num2 c, Integral c, FromIntegral c b,            FiniteBits c, Eq c, Num2 (Exp c), c ~ Unsigned a, c ~ Unsigned c, Exp c ~ Unsigned (Exp c)
-         , P.Integral (Signed b), P.Bits (Signed b)
-         , P.Integral (Exp (BigInt a b))
-         )
-    => P.Num (Exp (BigInt a b)) where
-  negate (unlift -> I2 hi lo) =
-    if lo == 0
-      then mkI2 (negate hi) 0
-      else mkI2 (negate (hi+1)) (negate lo)
-
-  signum (unlift -> I2 hi lo) =
-    if hi <  0 then mkI2 (-1) maxBound else
-    if hi == 0 then if lo == 0 then 0 else 1
-               else mkI2 0 1
-
-  abs x =
-    if x < 0
-      then negate x
-      else x
-
-  (unlift -> I2 xh xl) + (unlift -> I2 yh yl) = mkI2 hi lo
-    where
-      lo = xl + yl
-      hi = xh + yh + if lo < xl then 1 else 0
-
-  x * y = signed (unsigned x * unsigned y)
-
-  fromInteger x = mkI2 (fromInteger hi) (fromInteger lo)
-    where
-      (hi,lo) = x `divMod` (P.toInteger (maxBound::b) + 1)
---}
-
--- instance ( P.Integral a,              P.FiniteBits a, Num2 a, Exp a ~ Signed (Exp a),   a ~ Signed a,   a ~ Signed c
---          , P.Integral b, P.Bounded b, P.FiniteBits b, Exp b ~ Unsigned (Exp b), b ~ Unsigned b
---          , P.Integral c, P.Bounded c, P.FiniteBits c,                          c ~ Unsigned a, c ~ Unsigned c
---          , P.Integral (Signed b), P.Bits (Signed b)
---          , Ord a, Ord b
---          )
--- instance _
---     => P.Integral (Exp (BigInt a b))
-
 instance ( Integral a
          , Integral b
          , Num (BigInt a b)
