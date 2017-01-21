@@ -545,6 +545,7 @@ instance ( Num a, Ord a
 instance ( Integral a
          , Integral b
          , Num (BigInt a b)
+         , Eq (BigWord (Unsigned a) b)
          , Integral (BigWord (Unsigned a) b)
          , Num2 (Exp (BigInt a b))
          , Num2 (Exp (BigWord (Unsigned a) b))
