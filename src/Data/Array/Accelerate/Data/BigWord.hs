@@ -24,6 +24,6 @@ module Data.Array.Accelerate.Data.BigWord (
 
 ) where
 
-import Data.Array.Accelerate.Data.Internal.BigWord
-import Data.Array.Accelerate.Data.Internal.Orphans ()
+import Data.Array.Accelerate.Internal.BigWord
+import Data.Array.Accelerate.Internal.Orphans ()
 

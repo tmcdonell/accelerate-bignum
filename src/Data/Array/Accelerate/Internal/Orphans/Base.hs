@@ -9,7 +9,7 @@
 {-# LANGUAGE ViewPatterns          #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 -- |
--- Module      : Data.Array.Accelerate.Data.Internal.Orphans
+-- Module      : Data.Array.Accelerate.Internal.Orphans.Base
 -- Copyright   : [2016] Trevor L. McDonell
 -- License     : BSD3
 --
@@ -17,23 +17,21 @@
 -- Stability   : experimental
 -- Portability : non-portable (GHC extensions)
 --
--- This module (sadly) exists so that the Accelerate instances can be placed
--- next to each other. This is required due to the way the class hierarchy is
--- structured in order to avoid excessive (and ultimately redundant) class
--- constraints.
+-- Orphan instances for BigWord and BigInt for use with Accelerate. In
+-- a separate module so that (a) we can use rebindable syntax; and (b) to avoid
+-- excessive class constraints by placing instances next to each other.
 --
 
-module Data.Array.Accelerate.Data.Internal.Orphans ()
+module Data.Array.Accelerate.Internal.Orphans.Base ()
   where
 
-import Data.Array.Accelerate.Data.Internal.BigInt
-import Data.Array.Accelerate.Data.Internal.BigWord
-import Data.Array.Accelerate.Data.Internal.Num2
+import Data.Array.Accelerate.Internal.BigInt
+import Data.Array.Accelerate.Internal.BigWord
+import Data.Array.Accelerate.Internal.Num2
+import Data.Array.Accelerate.Internal.Orphans.Elt                   ()
 
 import Data.Array.Accelerate                                        as A
-import Data.Array.Accelerate.Array.Sugar
 import Data.Array.Accelerate.Data.Bits                              as A
-import Data.Array.Accelerate.Product
 import Data.Array.Accelerate.Smart
 
 import Prelude                                                      ( id, fromInteger )
@@ -450,32 +448,6 @@ instance FromIntegral Word256 Word256 where
   fromIntegral = id
 
 
-type instance EltRepr (BigWord a b) = EltRepr (a,b)
-
-instance (Elt a, Elt b, P.Show (BigWord a b)) => Elt (BigWord a b) where
-  eltType _        = eltType (undefined :: (a,b))
-  toElt w          = let (a,b) = toElt w in W2 a b
-  fromElt (W2 a b) = fromElt (a,b)
-
-instance (cst a, cst b) => IsProduct cst (BigWord a b) where
-  type ProdRepr (BigWord a b) = ProdRepr (a,b)
-  fromProd cst (W2 a b) = fromProd cst (a,b)
-  toProd cst w          = let (a,b) = toProd cst w in W2 a b
-  prod cst _            = prod cst (undefined :: (a,b))
-
-instance (Lift Exp a, Lift Exp b, Elt (Plain a), Elt (Plain b), P.Show (BigWord (Plain a) (Plain b)))
-    => Lift Exp (BigWord a b) where
-  type Plain (BigWord a b) = BigWord (Plain a) (Plain b)
-  lift (W2 a b)            = Exp $ Tuple (NilTup `SnocTup` lift a `SnocTup` lift b)
-
-instance (Elt a, Elt b, P.Show (BigWord a b)) => Unlift Exp (BigWord (Exp a) (Exp b)) where
-  unlift w =
-    let a = Exp $ SuccTupIdx ZeroTupIdx `Prj` w
-        b = Exp $ ZeroTupIdx `Prj` w
-    in
-    W2 a b
-
-
 -- BigInt
 -- ------
 
@@ -800,30 +772,4 @@ instance FromIntegral Int256 Word256 where
 
 instance FromIntegral Word256 Int256 where
   fromIntegral (unlift -> W2 hi lo) = mkI2 (fromIntegral hi) lo
-
-
-type instance EltRepr (BigInt a b) = EltRepr (a,b)
-
-instance (Elt a, Elt b, P.Show (BigInt a b)) => Elt (BigInt a b) where
-  eltType _        = eltType (undefined :: (a,b))
-  toElt w          = let (a,b) = toElt w in I2 a b
-  fromElt (I2 a b) = fromElt (a,b)
-
-instance (cst a, cst b) => IsProduct cst (BigInt a b) where
-  type ProdRepr (BigInt a b) = ProdRepr (a,b)
-  fromProd cst (I2 a b) = fromProd cst (a,b)
-  toProd cst w          = let (a,b) = toProd cst w in I2 a b
-  prod cst _            = prod cst (undefined :: (a,b))
-
-instance (Lift Exp a, Lift Exp b, Elt (Plain a), Elt (Plain b), P.Show (BigInt (Plain a) (Plain b)))
-    => Lift Exp (BigInt a b) where
-  type Plain (BigInt a b) = BigInt (Plain a) (Plain b)
-  lift (I2 a b)           = Exp $ Tuple (NilTup `SnocTup` lift a `SnocTup` lift b)
-
-instance (Elt a, Elt b, P.Show (BigInt a b)) => Unlift Exp (BigInt (Exp a) (Exp b)) where
-  unlift w =
-    let a = Exp $ SuccTupIdx ZeroTupIdx `Prj` w
-        b = Exp $ ZeroTupIdx `Prj` w
-    in
-    I2 a b
 

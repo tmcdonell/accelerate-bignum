@@ -4,7 +4,7 @@
 {-# LANGUAGE TypeFamilies         #-}
 {-# LANGUAGE UndecidableInstances #-}
 -- |
--- Module      : Data.Array.Accelerate.Data.Internal.BigWord
+-- Module      : Data.Array.Accelerate.Internal.BigWord
 -- Copyright   : [2016] Trevor L. McDonell
 -- License     : BSD3
 --
@@ -25,7 +25,7 @@
 --      difference for Accelerate though which is unboxed and hyper strict.
 
 
-module Data.Array.Accelerate.Data.Internal.BigWord (
+module Data.Array.Accelerate.Internal.BigWord (
 
   Word96,
   Word128,
@@ -43,8 +43,8 @@ import Data.Bits
 import Data.Ratio
 import Data.Word
 
-import {-# SOURCE #-} Data.Array.Accelerate.Data.Internal.BigInt
-import Data.Array.Accelerate.Data.Internal.Num2
+import {-# SOURCE #-} Data.Array.Accelerate.Internal.BigInt
+import Data.Array.Accelerate.Internal.Num2
 
 
 type Word96  = BigWord  Word32  Word64

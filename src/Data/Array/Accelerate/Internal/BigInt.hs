@@ -4,7 +4,7 @@
 {-# LANGUAGE TypeFamilies         #-}
 {-# LANGUAGE UndecidableInstances #-}
 -- |
--- Module      : Data.Array.Accelerate.Data.Internal.BigInt
+-- Module      : Data.Array.Accelerate.Internal.BigInt
 -- Copyright   : [2016] Trevor L. McDonell
 -- License     : BSD3
 --
@@ -20,7 +20,7 @@
 --  * https://github.com/mvv/data-dword
 --
 
-module Data.Array.Accelerate.Data.Internal.BigInt (
+module Data.Array.Accelerate.Internal.BigInt (
 
   Int96,
   Int128,
@@ -39,8 +39,8 @@ import Data.Int
 import Data.Ratio
 import Data.Word
 
-import Data.Array.Accelerate.Data.Internal.BigWord
-import Data.Array.Accelerate.Data.Internal.Num2
+import Data.Array.Accelerate.Internal.BigWord
+import Data.Array.Accelerate.Internal.Num2
 
 
 type Int96  = BigInt  Int32  Word64

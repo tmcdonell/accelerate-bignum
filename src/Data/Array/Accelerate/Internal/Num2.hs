@@ -8,7 +8,7 @@
 {-# LANGUAGE TypeFamilies        #-}
 {-# LANGUAGE UnboxedTuples       #-}
 -- |
--- Module      : Data.Array.Accelerate.Data.Internal.Num2
+-- Module      : Data.Array.Accelerate.Internal.Num2
 -- Copyright   : [2016] Trevor L. McDonell
 -- License     : BSD3
 --
@@ -19,7 +19,7 @@
 
 #include "MachDeps.h"
 
-module Data.Array.Accelerate.Data.Internal.Num2 ( Num2(..) )
+module Data.Array.Accelerate.Internal.Num2 ( Num2(..) )
   where
 
 import Data.Bits

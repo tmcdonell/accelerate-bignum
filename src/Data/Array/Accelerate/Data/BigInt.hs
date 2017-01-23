@@ -25,6 +25,6 @@ module Data.Array.Accelerate.Data.BigInt (
 
 ) where
 
-import Data.Array.Accelerate.Data.Internal.BigInt
-import Data.Array.Accelerate.Data.Internal.Orphans ()
+import Data.Array.Accelerate.Internal.BigInt
+import Data.Array.Accelerate.Internal.Orphans ()
 
