@@ -773,3 +773,122 @@ instance FromIntegral Int256 Word256 where
 instance FromIntegral Word256 Int256 where
   fromIntegral (unlift -> W2 hi lo) = mkI2 (fromIntegral hi) lo
 
+
+-- Num2
+-- ----
+
+instance Num2 (Exp Int8) where
+  type Signed   (Exp Int8) = Exp Int8
+  type Unsigned (Exp Int8) = Exp Word8
+  --
+  signed       = id
+  unsigned     = fromIntegral
+  addWithCarry = defaultUnwrapped ((+) :: Exp Int16 -> Exp Int16 -> Exp Int16)
+  mulWithCarry = defaultUnwrapped ((*) :: Exp Int16 -> Exp Int16 -> Exp Int16)
+
+instance Num2 (Exp Word8) where
+  type Signed   (Exp Word8) = Exp Int8
+  type Unsigned (Exp Word8) = Exp Word8
+  --
+  signed       = fromIntegral
+  unsigned     = id
+  addWithCarry = defaultUnwrapped ((+) :: Exp Word16 -> Exp Word16 -> Exp Word16)
+  mulWithCarry = defaultUnwrapped ((*) :: Exp Word16 -> Exp Word16 -> Exp Word16)
+
+instance Num2 (Exp Int16) where
+  type Signed   (Exp Int16) = Exp Int16
+  type Unsigned (Exp Int16) = Exp Word16
+  --
+  signed       = id
+  unsigned     = fromIntegral
+  addWithCarry = defaultUnwrapped ((+) :: Exp Int32 -> Exp Int32 -> Exp Int32)
+  mulWithCarry = defaultUnwrapped ((*) :: Exp Int32 -> Exp Int32 -> Exp Int32)
+
+instance Num2 (Exp Word16) where
+  type Signed   (Exp Word16) = Exp Int16
+  type Unsigned (Exp Word16) = Exp Word16
+  --
+  signed       = fromIntegral
+  unsigned     = id
+  addWithCarry = defaultUnwrapped ((+) :: Exp Word32 -> Exp Word32 -> Exp Word32)
+  mulWithCarry = defaultUnwrapped ((*) :: Exp Word32 -> Exp Word32 -> Exp Word32)
+
+instance Num2 (Exp Int32) where
+  type Signed   (Exp Int32) = Exp Int32
+  type Unsigned (Exp Int32) = Exp Word32
+  --
+  signed       = id
+  unsigned     = fromIntegral
+  addWithCarry = defaultUnwrapped ((+) :: Exp Int64 -> Exp Int64 -> Exp Int64)
+  mulWithCarry = defaultUnwrapped ((*) :: Exp Int64 -> Exp Int64 -> Exp Int64)
+
+instance Num2 (Exp Word32) where
+  type Signed   (Exp Word32) = Exp Int32
+  type Unsigned (Exp Word32) = Exp Word32
+  --
+  signed       = fromIntegral
+  unsigned     = id
+  addWithCarry = defaultUnwrapped ((+) :: Exp Word64 -> Exp Word64 -> Exp Word64)
+  mulWithCarry = defaultUnwrapped ((*) :: Exp Word64 -> Exp Word64 -> Exp Word64)
+
+instance Num2 (Exp Int64) where
+  type Signed   (Exp Int64) = Exp Int64
+  type Unsigned (Exp Int64) = Exp Word64
+  --
+  signed       = id
+  unsigned     = fromIntegral
+  addWithCarry x y = (hi,lo)
+    where
+      extX      = x < 0 ? (maxBound, 0)
+      extY      = y < 0 ? (maxBound, 0)
+      (hi',lo)  = unsigned x `addWithCarry` unsigned y
+      hi        = signed (hi' + extX + extY)
+
+  mulWithCarry x y = (hi,lo)
+    where
+      extX      = x < 0 ? (negate y, 0)
+      extY      = y < 0 ? (negate x, 0)
+      (hi',lo)  = unsigned x `mulWithCarry` unsigned y
+      hi        = signed hi' + extX + extY
+
+instance Num2 (Exp Word64) where
+  type Signed   (Exp Word64) = Exp Int64
+  type Unsigned (Exp Word64) = Exp Word64
+  --
+  signed       = fromIntegral
+  unsigned     = id
+  addWithCarry x y = (hi,lo)
+    where
+      lo = x + y
+      hi = lo < x ? (1,0)
+
+  mulWithCarry x y = (hi,lo)
+    where
+      xHi         = shiftR x 32
+      yHi         = shiftR y 32
+      xLo         = x .&. 0xFFFFFFFF
+      yLo         = y .&. 0xFFFFFFFF
+      hi0         = xHi * yHi
+      lo0         = xLo * yLo
+      p1          = xHi * yLo
+      p2          = xLo * yHi
+      (uHi1, uLo) = addWithCarry (fromIntegral p1) (fromIntegral p2)
+      (uHi2, lo') = addWithCarry (fromIntegral (shiftR lo0 32)) uLo
+      hi          = hi0 + fromIntegral (uHi1::Exp Word32) + fromIntegral uHi2 + shiftR p1 32 + shiftR p2 32
+      lo          = shiftL (fromIntegral lo') 32 .|. (lo0 .&. 0xFFFFFFFF)
+
+
+defaultUnwrapped
+    :: ( FiniteBits w, Bits ww, Integral w, Integral ww
+       , FromIntegral w ww, FromIntegral ww w, FromIntegral ww w', Unsigned (Exp w) ~ Exp w'
+       )
+    => (Exp ww -> Exp ww -> Exp ww)
+    -> Exp w
+    -> Exp w
+    -> (Exp w, Unsigned (Exp w))
+defaultUnwrapped op x y = (hi, lo)
+  where
+    r  = fromIntegral x `op` fromIntegral y
+    lo = fromIntegral r
+    hi = fromIntegral (r `shiftR` finiteBitSize x)
+

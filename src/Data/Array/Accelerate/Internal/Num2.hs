@@ -1,8 +1,6 @@
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE CPP                 #-}
-{-# LANGUAGE ConstraintKinds     #-}
 {-# LANGUAGE FlexibleContexts    #-}
-{-# LANGUAGE FlexibleInstances   #-}
 {-# LANGUAGE MagicHash           #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies        #-}
@@ -26,10 +24,6 @@ import Data.Bits
 import Data.Int
 import Data.Word
 import Prelude
-
-import Data.Array.Accelerate                                        ( Exp )
-import qualified Data.Array.Accelerate                              as A
-import qualified Data.Array.Accelerate.Data.Bits                    as A
 
 #if UNBOXED_TUPLES
 import GHC.Prim                                                     ( plusWord2#, timesWord2# )
@@ -180,124 +174,4 @@ defaultUnwrapped op x y = (hi, lo)
     !r  = fromIntegral x `op` fromIntegral y
     !lo = fromIntegral r
     !hi = fromIntegral (shiftR r (finiteBitSize x))
-
-
-
--- Accelerate
--- ----------
-
-instance Num2 (Exp Int8) where
-  type Signed   (Exp Int8) = Exp Int8
-  type Unsigned (Exp Int8) = Exp Word8
-  --
-  signed       = id
-  unsigned     = A.fromIntegral
-  addWithCarry = defaultUnwrapped' ((+) :: Exp Int16 -> Exp Int16 -> Exp Int16)
-  mulWithCarry = defaultUnwrapped' ((*) :: Exp Int16 -> Exp Int16 -> Exp Int16)
-
-instance Num2 (Exp Word8) where
-  type Signed   (Exp Word8) = Exp Int8
-  type Unsigned (Exp Word8) = Exp Word8
-  --
-  signed       = A.fromIntegral
-  unsigned     = id
-  addWithCarry = defaultUnwrapped' ((+) :: Exp Word16 -> Exp Word16 -> Exp Word16)
-  mulWithCarry = defaultUnwrapped' ((*) :: Exp Word16 -> Exp Word16 -> Exp Word16)
-
-instance Num2 (Exp Int16) where
-  type Signed   (Exp Int16) = Exp Int16
-  type Unsigned (Exp Int16) = Exp Word16
-  --
-  signed       = id
-  unsigned     = A.fromIntegral
-  addWithCarry = defaultUnwrapped' ((+) :: Exp Int32 -> Exp Int32 -> Exp Int32)
-  mulWithCarry = defaultUnwrapped' ((*) :: Exp Int32 -> Exp Int32 -> Exp Int32)
-
-instance Num2 (Exp Word16) where
-  type Signed   (Exp Word16) = Exp Int16
-  type Unsigned (Exp Word16) = Exp Word16
-  --
-  signed       = A.fromIntegral
-  unsigned     = id
-  addWithCarry = defaultUnwrapped' ((+) :: Exp Word32 -> Exp Word32 -> Exp Word32)
-  mulWithCarry = defaultUnwrapped' ((*) :: Exp Word32 -> Exp Word32 -> Exp Word32)
-
-instance Num2 (Exp Int32) where
-  type Signed   (Exp Int32) = Exp Int32
-  type Unsigned (Exp Int32) = Exp Word32
-  --
-  signed       = id
-  unsigned     = A.fromIntegral
-  addWithCarry = defaultUnwrapped' ((+) :: Exp Int64 -> Exp Int64 -> Exp Int64)
-  mulWithCarry = defaultUnwrapped' ((*) :: Exp Int64 -> Exp Int64 -> Exp Int64)
-
-instance Num2 (Exp Word32) where
-  type Signed   (Exp Word32) = Exp Int32
-  type Unsigned (Exp Word32) = Exp Word32
-  --
-  signed       = A.fromIntegral
-  unsigned     = id
-  addWithCarry = defaultUnwrapped' ((+) :: Exp Word64 -> Exp Word64 -> Exp Word64)
-  mulWithCarry = defaultUnwrapped' ((*) :: Exp Word64 -> Exp Word64 -> Exp Word64)
-
-instance Num2 (Exp Int64) where
-  type Signed   (Exp Int64) = Exp Int64
-  type Unsigned (Exp Int64) = Exp Word64
-  --
-  signed        = id
-  unsigned      = A.fromIntegral
-  addWithCarry x y = (hi,lo)
-    where
-      extX      = x A.< 0 A.? (maxBound, 0)
-      extY      = y A.< 0 A.? (maxBound, 0)
-      (hi',lo)  = unsigned x `addWithCarry` unsigned y
-      hi        = signed (hi' + extX + extY)
-
-  mulWithCarry x y = (hi,lo)
-    where
-      extX      = x A.< 0 A.? (negate y, 0)
-      extY      = y A.< 0 A.? (negate x, 0)
-      (hi',lo)  = unsigned x `mulWithCarry` unsigned y
-      hi        = signed hi' + extX + extY
-
-instance Num2 (Exp Word64) where
-  type Signed   (Exp Word64) = Exp Int64
-  type Unsigned (Exp Word64) = Exp Word64
-  --
-  signed       = A.fromIntegral
-  unsigned     = id
-  addWithCarry x y = (hi,lo)
-    where
-      lo = x + y
-      hi = lo A.< x A.? (1,0)
-
-  mulWithCarry x y = (hi,lo)
-    where
-      xHi         = A.shiftR x 32
-      yHi         = A.shiftR y 32
-      xLo         = x A..&. 0xFFFFFFFF
-      yLo         = y A..&. 0xFFFFFFFF
-      hi0         = xHi * yHi
-      lo0         = xLo * yLo
-      p1          = xHi * yLo
-      p2          = xLo * yHi
-      (uHi1, uLo) = addWithCarry (A.fromIntegral p1) (A.fromIntegral p2)
-      (uHi2, lo') = addWithCarry (A.fromIntegral (A.shiftR lo0 32)) uLo
-      hi          = hi0 + A.fromIntegral (uHi1::Exp Word32) + A.fromIntegral uHi2 + A.shiftR p1 32 + A.shiftR p2 32
-      lo          = A.shiftL (A.fromIntegral lo') 32 A..|. (lo0 A..&. 0xFFFFFFFF)
-
-
-defaultUnwrapped'
-    :: ( A.FiniteBits w, A.Bits ww, A.Integral w, A.Integral ww
-       , A.FromIntegral w ww, A.FromIntegral ww w, A.FromIntegral ww w', Unsigned (Exp w) ~ Exp w'
-       )
-    => (Exp ww -> Exp ww -> Exp ww)
-    -> Exp w
-    -> Exp w
-    -> (Exp w, Unsigned (Exp w))
-defaultUnwrapped' op x y = (hi, lo)
-  where
-    r  = A.fromIntegral x `op` A.fromIntegral y
-    lo = A.fromIntegral r
-    hi = A.fromIntegral (r `A.shiftR` A.finiteBitSize x)
 
