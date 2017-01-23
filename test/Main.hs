@@ -585,6 +585,9 @@ prop_divMod'  b t x (NonZero y) = prop_binary_acc divMod  (A.lift $$ divMod)  b 
 prop_complement' :: (Bits a, A.Bits a) => Backend -> proxy a -> a -> Bool
 prop_complement' = prop_unary_acc complement A.complement
 
+{-# INLINE prop_xor'  #-}
+{-# INLINE prop_band' #-}
+{-# INLINE prop_bor'  #-}
 prop_xor', prop_band', prop_bor' :: (Bits a, A.Bits a) => Backend -> proxy a -> a -> a -> Bool
 prop_xor'  = prop_binary_acc xor A.xor
 prop_band' = prop_binary_acc (.&.) (A..&.)

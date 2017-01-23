@@ -6,6 +6,7 @@
 {-# LANGUAGE RebindableSyntax      #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE UndecidableInstances  #-}
 {-# LANGUAGE ViewPatterns          #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
@@ -34,10 +35,14 @@ import Data.Array.Accelerate.Internal.Orphans.Elt                   ()
 import qualified Data.Array.Accelerate.Internal.LLVM.Native         as CPU
 
 import Data.Array.Accelerate                                        as A
+import Data.Array.Accelerate.Array.Sugar                            as A ( eltType )
+import Data.Array.Accelerate.Analysis.Match                         as A
 import Data.Array.Accelerate.Data.Bits                              as A
 import Data.Array.Accelerate.Smart
 
-import Prelude                                                      ( id, fromInteger )
+import Data.Maybe
+import Data.Typeable
+import Prelude                                                      ( id, fromInteger, fail, otherwise )
 import qualified Prelude                                            as P
 
 
@@ -85,20 +90,33 @@ instance ( Num a
       then mkW2 (negate hi) 0
       else mkW2 (negate (hi+1)) (negate lo)
 
-  abs      = id
-  signum x = x == 0 ? (0,1)
-
-  (unlift -> W2 xh xl) + (unlift -> W2 yh yl) = mkW2 hi lo
-    where
-      lo = xl + yl
-      hi = xh + yh + if lo < xl then 1 else 0
-
-  (unlift -> W2 xh xl) * (unlift -> W2 yh yl) = mkW2 hi lo
-    where
-      hi      = xh * fromIntegral yl + yh * fromIntegral xl + fromIntegral c
-      (c,lo)  = mulWithCarry xl yl
-
+  abs         = id
+  signum x    = x == 0 ? (0,1)
   fromInteger = constant . P.fromInteger
+
+  {-# SPECIALIZE (+) :: Exp Word128 -> Exp Word128 -> Exp Word128 #-}
+  (+) | Just Refl <- matchWord128 (undefined::BigWord a b) = CPU.addWord128# add
+      | otherwise                                          = add
+    where
+      add :: Exp (BigWord a b) -> Exp (BigWord a b) -> Exp (BigWord a b)
+      add (unlift -> W2 xh xl) (unlift -> W2 yh yl) = mkW2 hi lo
+        where
+          lo = xl + yl
+          hi = xh + yh + if lo < xl then 1 else 0
+
+  {-# SPECIALIZE (-) :: Exp Word128 -> Exp Word128 -> Exp Word128 #-}
+  (-) | Just Refl <- matchWord128 (undefined::BigWord a b) = CPU.subWord128# (\x y -> x + negate y)
+      | otherwise                                          = \x y -> x + negate y
+
+  {-# SPECIALIZE (*) :: Exp Word128 -> Exp Word128 -> Exp Word128 #-}
+  (*) | Just Refl <- matchWord128 (undefined::BigWord a b) = CPU.mulWord128# mul
+      | otherwise                                          = mul
+    where
+      mul :: Exp (BigWord a b) -> Exp (BigWord a b) -> Exp (BigWord a b)
+      mul (unlift -> W2 xh xl) (unlift -> W2 yh yl) = mkW2 hi lo
+        where
+          hi      = xh * fromIntegral yl + yh * fromIntegral xl + fromIntegral c
+          (c,lo)  = mulWithCarry xl yl
 
 
 instance ( Integral a, FiniteBits a, FromIntegral a b, Num2 (Exp a), Bounded a
@@ -110,11 +128,31 @@ instance ( Integral a, FiniteBits a, FromIntegral a b, Num2 (Exp a), Bounded a
     => P.Integral (Exp (BigWord a b)) where
   toInteger = error "Prelude.toInteger not supported for Accelerate types"
 
+  {-# SPECIALIZE div    :: Exp Word128 -> Exp Word128 -> Exp Word128 #-}
+  {-# SPECIALIZE mod    :: Exp Word128 -> Exp Word128 -> Exp Word128 #-}
+  {-# SPECIALIZE divMod :: Exp Word128 -> Exp Word128 -> (Exp Word128, Exp Word128) #-}
+  div    = quot
+  mod    = rem
   divMod = quotRem
-  quotRem x y = untup2 $ quotRem' (unlift x) (unlift y)
+
+  {-# SPECIALISE quot :: Exp Word128 -> Exp Word128 -> Exp Word128 #-}
+  quot | Just Refl <- matchWord128 (undefined::BigWord a b) = CPU.quotWord128# go
+       | otherwise                                          = go
     where
-      quotRem' :: BigWord (Exp a) (Exp b) -> BigWord (Exp a) (Exp b) -> Exp (BigWord a b, BigWord a b)
-      quotRem' (W2 xh xl) (W2 yh yl)
+      go x y = P.fst (quotRem x y)
+
+  {-# SPECIALISE rem :: Exp Word128 -> Exp Word128 -> Exp Word128 #-}
+  rem | Just Refl <- matchWord128 (undefined::BigWord a b) = CPU.remWord128# go
+      | otherwise                                          = go
+    where
+      go x y = P.snd (quotRem x y)
+
+  {-# SPECIALISE quotRem :: Exp Word128 -> Exp Word128 -> (Exp Word128, Exp Word128) #-}
+  quotRem | Just Refl <- matchWord128 (undefined::BigWord a b) = untup2 $$ CPU.quotRemWord128# quotRem'
+          | otherwise                                          = untup2 $$ quotRem'
+    where
+      quotRem' :: Exp (BigWord a b) -> Exp (BigWord a b) -> Exp (BigWord a b, BigWord a b)
+      quotRem' x@(unlift -> W2 xh xl) y@(unlift -> W2 yh yl)
         = xh <  yh ? ( tup2 (0, x)
         , xh == yh ? ( xl <  yl ? ( tup2 (0, x)
                      , xl == yl ? ( tup2 (1, 0)
@@ -507,14 +545,28 @@ instance ( Num a, Ord a
     if x < 0 then negate x
              else x
 
-  (unlift -> I2 xh xl) + (unlift -> I2 yh yl) = mkI2 hi lo
-    where
-      lo = xl + yl
-      hi = xh + yh + if lo < xl then 1 else 0
-
-  x * y = signed (unsigned x * unsigned y)
-
   fromInteger = constant . fromInteger
+
+  {-# SPECIALIZE (+) :: Exp Int128 -> Exp Int128 -> Exp Int128 #-}
+  (+) | Just Refl <- matchInt128 (undefined::BigInt a b) = CPU.addInt128# add
+      | otherwise                                        = add
+    where
+      add :: Exp (BigInt a b) -> Exp (BigInt a b) -> Exp (BigInt a b)
+      add (unlift -> I2 xh xl) (unlift -> I2 yh yl) = mkI2 hi lo
+        where
+          lo = xl + yl
+          hi = xh + yh + if lo < xl then 1 else 0
+
+  {-# SPECIALIZE (-) :: Exp Int128 -> Exp Int128 -> Exp Int128 #-}
+  (-) | Just Refl <- matchInt128 (undefined::BigInt a b) = CPU.subInt128# (\x y -> x + negate y)
+      | otherwise                                        = \x y -> x + negate y
+
+  {-# SPECIALIZE (*) :: Exp Int128 -> Exp Int128 -> Exp Int128 #-}
+  (*) | Just Refl <- matchInt128 (undefined::BigInt a b) = CPU.mulInt128# mul
+      | otherwise                                        = mul
+    where
+      mul :: Exp (BigInt a b) -> Exp (BigInt a b) -> Exp (BigInt a b)
+      mul x y = signed (unsigned x * unsigned y)
 
 
 instance ( Integral a
@@ -529,23 +581,45 @@ instance ( Integral a
     => P.Integral (Exp (BigInt a b)) where
   toInteger = error "Prelude.toInteger not supported for Accelerate types"
 
-  quotRem x y = untup2 $
-    if x < 0
-      then if y < 0
-             then
-               let (q,r) = quotRem (negate (unsigned x)) (negate (unsigned y))
-               in  tup2 (signed q, signed (negate r))
-             else
-               let (q,r) = quotRem (negate (unsigned x)) (unsigned y)
-               in  tup2 (signed (negate q), signed (negate r))
-      else if y < 0
-             then
-               let (q,r) = quotRem (unsigned x) (negate (unsigned y))
-               in  tup2 (signed (negate q), signed r)
-             else
-               let (q,r) = quotRem (unsigned x) (unsigned y)
-               in  tup2 (signed q, signed r)
+  {-# SPECIALIZE quot :: Exp Int128 -> Exp Int128 -> Exp Int128 #-}
+  quot | Just Refl <- matchInt128 (undefined::BigInt a b) = CPU.quotInt128# go
+       | otherwise                                        = go
+    where
+      go x y = P.fst (quotRem x y)
 
+  {-# SPECIALIZE rem :: Exp Int128 -> Exp Int128 -> Exp Int128 #-}
+  rem | Just Refl <- matchInt128 (undefined::BigInt a b) = CPU.remInt128# go
+      | otherwise                                        = go
+    where
+      go x y = P.snd (quotRem x y)
+
+  {-# SPECIALISE quotRem :: Exp Int128 -> Exp Int128 -> (Exp Int128, Exp Int128) #-}
+  quotRem | Just Refl <- matchInt128 (undefined::BigInt a b) = untup2 $$ CPU.quotRemInt128# quotRem'
+          | otherwise                                        = untup2 $$ quotRem'
+    where
+      quotRem' x y =
+        if x < 0
+          then if y < 0
+                 then
+                   let (q,r) = quotRem (negate (unsigned x)) (negate (unsigned y))
+                   in  tup2 (signed q, signed (negate r))
+                 else
+                   let (q,r) = quotRem (negate (unsigned x)) (unsigned y)
+                   in  tup2 (signed (negate q), signed (negate r))
+          else if y < 0
+                 then
+                   let (q,r) = quotRem (unsigned x) (negate (unsigned y))
+                   in  tup2 (signed (negate q), signed r)
+                 else
+                   let (q,r) = quotRem (unsigned x) (unsigned y)
+                   in  tup2 (signed q, signed r)
+
+  {-# SPECIALIZE div :: Exp Int128 -> Exp Int128 -> Exp Int128 #-}
+  {-# SPECIALIZE mod :: Exp Int128 -> Exp Int128 -> Exp Int128 #-}
+  div x y = P.fst (divMod x y)
+  mod x y = P.snd (divMod x y)
+
+  {-# SPECIALIZE divMod :: Exp Int128 -> Exp Int128 -> (Exp Int128, Exp Int128) #-}
   divMod x y = untup2 $
     if x < 0
       then if y < 0
@@ -902,4 +976,22 @@ defaultUnwrapped op x y = (hi, lo)
     r  = fromIntegral x `op` fromIntegral y
     lo = fromIntegral r
     hi = fromIntegral (r `shiftR` finiteBitSize x)
+
+
+-- Utilities
+-- ---------
+
+matchInt128 :: Elt (BigInt a b) => BigInt a b -> Maybe (BigInt a b :~: Int128)
+matchInt128 t
+  | Just Refl <- matchTupleType (eltType t) (eltType (undefined::Int128))
+  = gcast Refl
+matchInt128 _
+  = Nothing
+
+matchWord128 :: Elt (BigWord a b) => BigWord a b -> Maybe (BigWord a b :~: Word128)
+matchWord128 t
+  | Just Refl <- matchTupleType (eltType t) (eltType (undefined::Word128))
+  = gcast Refl
+matchWord128 _
+  = Nothing
 
