@@ -25,6 +25,10 @@ flag llvm-cpu
   description:          Enable primpos for the LLVM CPU backend
   default:              True
 
+flag llvm-ptx
+  description:          Enable primops for the LLVM PTX backend
+  default:              True
+
 library
   default-language:     Haskell2010
   hs-source-dirs:       src
@@ -51,6 +55,16 @@ library
     build-depends:
           accelerate-llvm               == 1.0.*
         , accelerate-llvm-native        == 1.0.*
+        , llvm-general-pure             >= 3.5
+    --
+    other-modules:
+      Data.Array.Accelerate.Internal.LLVM.Prim
+
+  if flag(llvm-ptx)
+    cpp-options:        -DACCELERATE_LLVM_PTX_BACKEND
+    build-depends:
+          accelerate-llvm               == 1.0.*
+        , accelerate-llvm-ptx           == 1.0.*
         , llvm-general-pure             >= 3.5
     --
     other-modules:
@@ -85,6 +99,16 @@ test-suite accelerate-bignum-test
         -with-rtsopts=-N
         -with-rtsopts=-n2M
         -with-rtsopts=-A64M
+
+  if flag(llvm-cpu)
+    cpp-options:        -DACCELERATE_LLVM_NATIVE_BACKEND
+    build-depends:
+          accelerate-llvm-native
+
+  if flag(llvm-ptx)
+    cpp-options:        -DACCELERATE_LLVM_PTX_BACKEND
+    build-depends:
+          accelerate-llvm-ptx
 
 source-repository head
   type:     git
