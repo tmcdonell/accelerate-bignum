@@ -20,10 +20,12 @@ module Data.Array.Accelerate.Data.BigWord (
   Word512,
 
   -- ** Internals
-  BigWord(..)
+  BigWord(..),
+  Num2(..),
 
 ) where
 
+import Data.Array.Accelerate.Internal.Num2
 import Data.Array.Accelerate.Internal.BigWord
 import Data.Array.Accelerate.Internal.Orphans ()
 

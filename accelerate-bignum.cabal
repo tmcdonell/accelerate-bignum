@@ -53,11 +53,12 @@ library
 test-suite accelerate-bignum-test
   default-language:     Haskell2010
   type:                 exitcode-stdio-1.0
-  hs-source-dirs:       test src
+  hs-source-dirs:       test
   main-is:              Main.hs
   build-depends:
           base                          >= 4.8 && < 4.10
         , accelerate                    >= 0.16
+        , accelerate-bignum
         , tasty
         , tasty-quickcheck
 

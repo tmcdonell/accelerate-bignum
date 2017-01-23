@@ -21,10 +21,12 @@ module Data.Array.Accelerate.Data.BigInt (
   Int512,
 
   -- ** Internals
-  BigInt(..)
+  BigInt(..),
+  Num2(..)
 
 ) where
 
+import Data.Array.Accelerate.Internal.Num2
 import Data.Array.Accelerate.Internal.BigInt
 import Data.Array.Accelerate.Internal.Orphans ()
 

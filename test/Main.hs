@@ -20,7 +20,6 @@ import Text.Printf
 
 import Data.Array.Accelerate.Data.BigInt
 import Data.Array.Accelerate.Data.BigWord
-import Data.Array.Accelerate.Data.Internal.Num2
 
 import Data.Array.Accelerate                                        ( Arrays, Acc, Scalar, Elt, Exp, Lift, Plain )
 import Data.Array.Accelerate.Debug                                  ( accInit )
