@@ -1,6 +1,7 @@
 {-# LANGUAGE ConstraintKinds       #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MagicHash             #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RebindableSyntax      #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
@@ -29,6 +30,8 @@ import Data.Array.Accelerate.Internal.BigInt
 import Data.Array.Accelerate.Internal.BigWord
 import Data.Array.Accelerate.Internal.Num2
 import Data.Array.Accelerate.Internal.Orphans.Elt                   ()
+
+import qualified Data.Array.Accelerate.Internal.LLVM.Native         as CPU
 
 import Data.Array.Accelerate                                        as A
 import Data.Array.Accelerate.Data.Bits                              as A
@@ -837,19 +840,23 @@ instance Num2 (Exp Int64) where
   --
   signed       = id
   unsigned     = fromIntegral
-  addWithCarry x y = (hi,lo)
+  addWithCarry = untup2 $$ CPU.addWithCarryInt64# awc
     where
-      extX      = x < 0 ? (maxBound, 0)
-      extY      = y < 0 ? (maxBound, 0)
-      (hi',lo)  = unsigned x `addWithCarry` unsigned y
-      hi        = signed (hi' + extX + extY)
+      awc x y = tup2 (hi,lo)
+        where
+          extX      = x < 0 ? (maxBound, 0)
+          extY      = y < 0 ? (maxBound, 0)
+          (hi',lo)  = unsigned x `addWithCarry` unsigned y
+          hi        = signed (hi' + extX + extY)
 
-  mulWithCarry x y = (hi,lo)
+  mulWithCarry = untup2 $$ CPU.mulWithCarryInt64# mwc
     where
-      extX      = x < 0 ? (negate y, 0)
-      extY      = y < 0 ? (negate x, 0)
-      (hi',lo)  = unsigned x `mulWithCarry` unsigned y
-      hi        = signed hi' + extX + extY
+      mwc x y = tup2 (hi,lo)
+        where
+          extX      = x < 0 ? (negate y, 0)
+          extY      = y < 0 ? (negate x, 0)
+          (hi',lo)  = unsigned x `mulWithCarry` unsigned y
+          hi        = signed hi' + extX + extY
 
 instance Num2 (Exp Word64) where
   type Signed   (Exp Word64) = Exp Int64
@@ -857,25 +864,29 @@ instance Num2 (Exp Word64) where
   --
   signed       = fromIntegral
   unsigned     = id
-  addWithCarry x y = (hi,lo)
+  addWithCarry = untup2 $$ CPU.addWithCarryWord64# awc
     where
-      lo = x + y
-      hi = lo < x ? (1,0)
+      awc x y = tup2 (hi,lo)
+        where
+          lo = x + y
+          hi = lo < x ? (1,0)
 
-  mulWithCarry x y = (hi,lo)
+  mulWithCarry = untup2 $$ CPU.mulWithCarryWord64# mwc
     where
-      xHi         = shiftR x 32
-      yHi         = shiftR y 32
-      xLo         = x .&. 0xFFFFFFFF
-      yLo         = y .&. 0xFFFFFFFF
-      hi0         = xHi * yHi
-      lo0         = xLo * yLo
-      p1          = xHi * yLo
-      p2          = xLo * yHi
-      (uHi1, uLo) = addWithCarry (fromIntegral p1) (fromIntegral p2)
-      (uHi2, lo') = addWithCarry (fromIntegral (shiftR lo0 32)) uLo
-      hi          = hi0 + fromIntegral (uHi1::Exp Word32) + fromIntegral uHi2 + shiftR p1 32 + shiftR p2 32
-      lo          = shiftL (fromIntegral lo') 32 .|. (lo0 .&. 0xFFFFFFFF)
+      mwc x y = tup2 (hi,lo)
+        where
+          xHi         = shiftR x 32
+          yHi         = shiftR y 32
+          xLo         = x .&. 0xFFFFFFFF
+          yLo         = y .&. 0xFFFFFFFF
+          hi0         = xHi * yHi
+          lo0         = xLo * yLo
+          p1          = xHi * yLo
+          p2          = xLo * yHi
+          (uHi1, uLo) = addWithCarry (fromIntegral p1) (fromIntegral p2)
+          (uHi2, lo') = addWithCarry (fromIntegral (shiftR lo0 32)) uLo
+          hi          = hi0 + fromIntegral (uHi1::Exp Word32) + fromIntegral uHi2 + shiftR p1 32 + shiftR p2 32
+          lo          = shiftL (fromIntegral lo') 32 .|. (lo0 .&. 0xFFFFFFFF)
 
 
 defaultUnwrapped
