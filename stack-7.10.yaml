@@ -10,7 +10,22 @@ packages:
     commit: b471890ae4b7bbdbbee00880331b6ee109efcf67
   extra-dep: true
 
+- location:
+    git:    https://github.com/AccelerateHS/accelerate-llvm.git
+    commit: 6c4d7a6c20c871cfbe0deedd65cd2c97ed9fd50d
+  extra-dep: true
+  subdirs:
+    - 'accelerate-llvm'
+    - 'accelerate-llvm-native'
+    - 'accelerate-llvm-ptx'
+
 extra-deps:
+- 'chaselev-deque-0.5.0.5'
+- 'cuda-0.7.5.2'
+- 'libffi-0.1'
+- 'llvm-general-3.5.1.2'
+- 'llvm-general-pure-3.5.1.0'
+- 'nvvm-0.7.5.1'
 - 'unique-0'
 
 # Override default flag values for local packages and extra-deps
@@ -21,6 +36,20 @@ flags:
     bounds-checks: true
     internal-checks: false
     unsafe-checks: false
+  accelerate:
+    debug: true
+    ekg: false
+    bounds-checks: true
+    internal-checks: false
+    unsafe-checks: false
+  accelerate-llvm-native:
+    debug: true
+  accelerate-llvm-ptx:
+    debug: true
+    nvvm: false
+  accelerate-bignum:
+    llvm-cpu: true
+    llvm-ptx: false
 
 # Extra package databases containing global packages
 extra-package-dbs: []
