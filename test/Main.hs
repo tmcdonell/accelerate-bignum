@@ -81,6 +81,7 @@ testAcc backend = testGroup (show backend)
     , testNum2Acc backend (Proxy::Proxy Int64)
     ]
   , testGroup "FromIntegral"
+    -- little -> big
     [ testFromIntegral backend (Proxy::Proxy Int32)  (Proxy::Proxy Int128)
     , testFromIntegral backend (Proxy::Proxy Int32)  (Proxy::Proxy Int192)
     , testFromIntegral backend (Proxy::Proxy Int32)  (Proxy::Proxy Word128)
@@ -97,6 +98,24 @@ testAcc backend = testGroup (show backend)
     , testFromIntegral backend (Proxy::Proxy Word64) (Proxy::Proxy Int192)
     , testFromIntegral backend (Proxy::Proxy Word64) (Proxy::Proxy Word128)
     , testFromIntegral backend (Proxy::Proxy Word64) (Proxy::Proxy Word192)
+
+    -- big -> little
+    , testFromIntegral backend (Proxy::Proxy Int128)  (Proxy::Proxy Int32)
+    , testFromIntegral backend (Proxy::Proxy Int192)  (Proxy::Proxy Int32)
+    , testFromIntegral backend (Proxy::Proxy Word128) (Proxy::Proxy Int32)
+    , testFromIntegral backend (Proxy::Proxy Word192) (Proxy::Proxy Int32)
+    , testFromIntegral backend (Proxy::Proxy Int128)  (Proxy::Proxy Int64)
+    , testFromIntegral backend (Proxy::Proxy Int192)  (Proxy::Proxy Int64)
+    , testFromIntegral backend (Proxy::Proxy Word128) (Proxy::Proxy Int64)
+    , testFromIntegral backend (Proxy::Proxy Word192) (Proxy::Proxy Int64)
+    , testFromIntegral backend (Proxy::Proxy Int128)  (Proxy::Proxy Word32)
+    , testFromIntegral backend (Proxy::Proxy Int192)  (Proxy::Proxy Word32)
+    , testFromIntegral backend (Proxy::Proxy Word128) (Proxy::Proxy Word32)
+    , testFromIntegral backend (Proxy::Proxy Word192) (Proxy::Proxy Word32)
+    , testFromIntegral backend (Proxy::Proxy Int128)  (Proxy::Proxy Word64)
+    , testFromIntegral backend (Proxy::Proxy Int192)  (Proxy::Proxy Word64)
+    , testFromIntegral backend (Proxy::Proxy Word128) (Proxy::Proxy Word64)
+    , testFromIntegral backend (Proxy::Proxy Word192) (Proxy::Proxy Word64)
     ]
   , testMainAcc backend (Proxy::Proxy Word96)
   , testMainAcc backend (Proxy::Proxy Word128)
