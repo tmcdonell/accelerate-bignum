@@ -3,8 +3,10 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MagicHash             #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE QuasiQuotes           #-}
 {-# LANGUAGE RebindableSyntax      #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE UndecidableInstances  #-}
@@ -40,9 +42,12 @@ import Data.Array.Accelerate.Analysis.Match                         as A
 import Data.Array.Accelerate.Data.Bits                              as A
 import Data.Array.Accelerate.Smart
 
+import Control.Monad
 import Data.Maybe
 import Data.Typeable
-import Prelude                                                      ( id, fromInteger, fail, otherwise )
+import Language.Haskell.TH                                          hiding ( Exp )
+import Text.Printf
+import Prelude                                                      ( id, fromInteger, otherwise )
 import qualified Prelude                                            as P
 
 
@@ -435,60 +440,6 @@ instance ( Integral a, FiniteBits a, FromIntegral a b
       wsib  = finiteBitSize (undefined::Exp b)
 
 
--- Conversions to higher bit-widths
-
-instance FromIntegral Word32 Int128 where
-  fromIntegral x = mkI2 0 (fromIntegral x)
-
-instance FromIntegral Word32 Word128 where
-  fromIntegral x = mkW2 0 (fromIntegral x)
-
-instance FromIntegral Word32 Int192 where
-  fromIntegral x = mkI2 0 (mkW2 0 (fromIntegral x))
-
-instance FromIntegral Word32 Word192 where
-  fromIntegral x = mkW2 0 (mkW2 0 (fromIntegral x))
-
-instance FromIntegral Word64 Int128 where
-  fromIntegral x = mkI2 0 x
-
-instance FromIntegral Word64 Word128 where
-  fromIntegral x = mkW2 0 x
-
-instance FromIntegral Word64 Int192 where
-  fromIntegral x = mkI2 0 (mkW2 0 x)
-
-instance FromIntegral Word64 Word192 where
-  fromIntegral x = mkW2 0 (mkW2 0 x)
-
-
--- Conversions to lower bit-widths (lossy)
-
-instance FromIntegral Word128 Word32 where
-  fromIntegral (unlift -> W2 (_::Exp Word64) lo) = fromIntegral lo
-
-instance FromIntegral Word128 Word64 where
-  fromIntegral (unlift -> W2 (_::Exp Word64) lo) = lo
-
-instance FromIntegral Word192 Word32 where
-  fromIntegral (unlift -> W2 (_::Exp Word64) lo) = fromIntegral lo
-
-instance FromIntegral Word192 Word64 where
-  fromIntegral (unlift -> W2 (_::Exp Word64) lo) = fromIntegral lo
-
-
--- Conversions at the same bit width
-
-instance FromIntegral Word128 Word128 where
-  fromIntegral = id
-
-instance FromIntegral Word192 Word192 where
-  fromIntegral = id
-
-instance FromIntegral Word256 Word256 where
-  fromIntegral = id
-
-
 -- BigInt
 -- ------
 
@@ -769,88 +720,6 @@ instance ( Ord a
                            else t4
 
 
--- Conversions to higher bit-widths
-
-instance FromIntegral Int32 Int128 where
-  fromIntegral x@(fromIntegral -> x') =
-    if x < 0 then mkI2 (-1) x'
-             else mkI2 0    x'
-
-instance FromIntegral Int32 Word128 where
-  fromIntegral x@(fromIntegral -> x') =
-    if x < 0 then mkW2 maxBound x'
-             else mkW2 0        x'
-
-instance FromIntegral Int32 Int192 where
-  fromIntegral x@(fromIntegral -> x') =
-    if x < 0 then mkI2 (-1) x'
-             else mkI2 0    x'
-
-instance FromIntegral Int32 Word192 where
-  fromIntegral x@(fromIntegral -> x') =
-    if x < 0 then mkW2 maxBound x'
-             else mkW2 0        x'
-
-instance FromIntegral Int64 Int128 where
-  fromIntegral x@(fromIntegral -> x') =
-    if x < 0 then mkI2 (-1) x'
-             else mkI2 0    x'
-
-instance FromIntegral Int64 Word128 where
-  fromIntegral x@(fromIntegral -> x') =
-    if x < 0 then mkW2 maxBound x'
-             else mkW2 0        x'
-
-instance FromIntegral Int64 Int192 where
-  fromIntegral x@(fromIntegral -> x') =
-    if x < 0 then mkI2 (-1) x'
-             else mkI2 0    x'
-
-instance FromIntegral Int64 Word192 where
-  fromIntegral x@(fromIntegral -> x') =
-    if x < 0 then mkW2 maxBound x'
-             else mkW2 0        x'
-
-
--- Conversions to lower bit-widths (lossy)
-
-instance FromIntegral Word128 Int32 where
-  fromIntegral (unlift -> W2 (_::Exp Word64) lo) = fromIntegral lo
-
-instance FromIntegral Word128 Int64 where
-  fromIntegral (unlift -> W2 (_::Exp Word64) lo) = fromIntegral lo
-
-instance FromIntegral Word192 Int32 where
-  fromIntegral (unlift -> W2 (_::Exp Word64) lo) = fromIntegral lo
-
-instance FromIntegral Word192 Int64 where
-  fromIntegral (unlift -> W2 (_::Exp Word64) lo) = fromIntegral lo
-
-
--- Signed/Unsigned conversions at the same width
-
-instance FromIntegral Int128 Word128 where
-  fromIntegral (unlift -> I2 hi lo) = mkW2 (fromIntegral hi) lo
-
-instance FromIntegral Int192 Word192 where
-  fromIntegral (unlift -> I2 hi lo) = mkW2 (fromIntegral hi) lo
-
-instance FromIntegral Int128 Int128 where
-  fromIntegral = id
-
-instance FromIntegral Word128 Int128 where
-  fromIntegral (unlift -> W2 hi lo) = mkI2 (fromIntegral hi) lo
-
-instance FromIntegral Int256 Int256 where
-  fromIntegral = id
-
-instance FromIntegral Int256 Word256 where
-  fromIntegral (unlift -> I2 hi lo) = mkW2 (fromIntegral hi) lo
-
-instance FromIntegral Word256 Int256 where
-  fromIntegral (unlift -> W2 hi lo) = mkI2 (fromIntegral hi) lo
-
-
 -- Num2
 -- ----
 
@@ -994,4 +863,90 @@ matchWord128 t
   = gcast Refl
 matchWord128 _
   = Nothing
+
+
+-- FromIntegral conversions
+-- ------------------------
+
+$(runQ $ do
+    let
+        lilNums = [ 32, 64 ]
+        bigNums = [ (32,64), (64,64), (32,128), (64,128), (32,192), (128,128), (256,256) ]
+
+        wordT :: Int -> Q Type
+        wordT = return . ConT . mkName . printf "Word%d"
+
+        intT :: Int -> Q Type
+        intT = return . ConT . mkName . printf "Int%d"
+
+        bigWordT :: (Int,Int) -> Q Type
+        bigWordT (hi,lo) = wordT (hi+lo)
+
+        bigIntT :: (Int,Int) -> Q Type
+        bigIntT (hi,lo) = intT (hi+lo)
+
+        thFromIntegral1 :: (Int,Int) -> Q [Dec]
+        thFromIntegral1 big =
+          [d|
+              -- signed/unsigned bignum conversions at same width
+              instance FromIntegral $(bigIntT big) $(bigIntT big) where
+                fromIntegral = id
+
+              instance FromIntegral $(bigWordT big) $(bigWordT big) where
+                fromIntegral = id
+
+              instance FromIntegral $(bigIntT big) $(bigWordT big) where
+                fromIntegral (unlift -> I2 hi lo) = mkW2 (fromIntegral hi) lo
+
+              instance FromIntegral $(bigWordT big) $(bigIntT big) where
+                fromIntegral (unlift -> W2 hi lo) = mkI2 (fromIntegral hi) lo
+            |]
+
+        thFromIntegral2 :: (Int,Int) -> Int -> Q [Dec]
+        thFromIntegral2 big@(bigH,bigL) little =
+          [d|
+              -- convert from primitive type to bignum type
+              instance FromIntegral $(wordT little) $(bigWordT big) where
+                fromIntegral x = mkW2 0 (fromIntegral x)
+
+              instance FromIntegral $(wordT little) $(bigIntT big) where
+                fromIntegral x = mkI2 0 (fromIntegral x)
+
+              instance FromIntegral $(intT little) $(bigWordT big) where
+                fromIntegral x@(fromIntegral -> x') =
+                  if x < 0 then mkW2 maxBound x'
+                           else mkW2 0        x'
+
+              instance FromIntegral $(intT little) $(bigIntT big) where
+                fromIntegral x@(fromIntegral -> x') =
+                  if x < 0 then mkI2 (-1) x'
+                           else mkI2 0    x'
+
+              -- convert from bignum type to primitive type
+              instance FromIntegral $(bigWordT big) $(wordT little) where
+                fromIntegral x =
+                  let W2 _ lo = unlift x :: BigWord (Exp $(wordT bigH)) (Exp $(wordT bigL))
+                  in  fromIntegral lo
+
+              instance FromIntegral $(bigWordT big) $(intT little) where
+                fromIntegral x =
+                  let W2 _ lo = unlift x :: BigWord (Exp $(wordT bigH)) (Exp $(wordT bigL))
+                  in  fromIntegral lo
+
+              instance FromIntegral $(bigIntT big) $(wordT little) where
+                fromIntegral x =
+                  let I2 _ lo = unlift x :: BigInt (Exp $(intT bigH)) (Exp $(wordT bigL))
+                  in  fromIntegral lo
+
+              instance FromIntegral $(bigIntT big) $(intT little) where
+                fromIntegral x =
+                  let I2 _ lo = unlift x :: BigInt (Exp $(intT bigH)) (Exp $(wordT bigL))
+                  in  fromIntegral lo
+            |]
+    --
+    d1 <- sequence [ thFromIntegral1 x   | x <- bigNums ]
+    d2 <- sequence [ thFromIntegral2 x y | x <- bigNums, y <- lilNums ]
+    --
+    return $ P.concat (d1 P.++ d2)
+ )
 
