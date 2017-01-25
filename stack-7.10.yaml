@@ -30,6 +30,8 @@ extra-deps:
 
 # Override default flag values for local packages and extra-deps
 flags:
+  llvm-general:
+    shared-llvm: true
   accelerate:
     debug: true
     ekg: false
