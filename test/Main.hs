@@ -98,7 +98,6 @@ testAcc backend = testGroup (show backend)
     , testFromIntegral backend (Proxy::Proxy Word64) (Proxy::Proxy Int192)
     , testFromIntegral backend (Proxy::Proxy Word64) (Proxy::Proxy Word128)
     , testFromIntegral backend (Proxy::Proxy Word64) (Proxy::Proxy Word192)
-
     -- big -> little
     , testFromIntegral backend (Proxy::Proxy Int128)  (Proxy::Proxy Int32)
     , testFromIntegral backend (Proxy::Proxy Int192)  (Proxy::Proxy Int32)
@@ -547,6 +546,8 @@ infixr 0 $$
 (f $$ g) x y = f (g x y)
 
 
+{-# INLINE prop_addWithCarry' #-}
+{-# INLINE prop_mulWithCarry' #-}
 prop_addWithCarry', prop_mulWithCarry'
     :: (Num2 (Exp a), Elt a, Elt (Unsigned a), Integral a, Integral (Unsigned a), FiniteBits (Unsigned a), A.Lift Exp (Unsigned (Exp a)), Plain (Unsigned (Exp a)) ~ Unsigned a)
     => Backend
@@ -557,6 +558,7 @@ prop_addWithCarry', prop_mulWithCarry'
 prop_addWithCarry' b t (Large x) (Large y) = uncurry toInteger2 (with_binary_acc b t (A.lift $$ addWithCarry) x y) == toInteger x + toInteger y
 prop_mulWithCarry' b t (Large x) (Large y) = uncurry toInteger2 (with_binary_acc b t (A.lift $$ mulWithCarry) x y) == toInteger x * toInteger y
 
+{-# INLINE prop_fromIntegral #-}
 prop_fromIntegral
     :: forall proxy a b. (Integral a, Num b, Eq b, A.Integral a, A.Num b, A.FromIntegral a b)
     => Backend
@@ -566,25 +568,39 @@ prop_fromIntegral
     -> Bool
 prop_fromIntegral b a _ = prop_unary_acc fromIntegral (A.fromIntegral :: Exp a -> Exp b) b a
 
+{-# INLINE prop_eq'  #-}
+{-# INLINE prop_neq' #-}
 prop_eq', prop_neq' :: (Eq a, A.Eq a) => Backend -> proxy a -> a -> a -> Bool
 prop_eq'  = prop_binary_acc (==) (A.==)
 prop_neq' = prop_binary_acc (/=) (A./=)
 
+{-# INLINE prop_lt'  #-}
+{-# INLINE prop_gt'  #-}
+{-# INLINE prop_lte' #-}
+{-# INLINE prop_gte' #-}
 prop_lt', prop_lte', prop_gt', prop_gte' :: (Ord a, A.Ord a) => Backend -> proxy a -> a -> a -> Bool
 prop_lt'  = prop_binary_acc (<)  (A.<)
 prop_gt'  = prop_binary_acc (>)  (A.>)
 prop_lte' = prop_binary_acc (<=) (A.<=)
 prop_gte' = prop_binary_acc (>=) (A.>=)
 
+{-# INLINE prop_minBound' #-}
+{-# INLINE prop_maxBound' #-}
 prop_minBound', prop_maxBound' :: forall proxy a. (Bounded a, Eq a, A.Bounded a) => Backend -> proxy a -> Bool
 prop_minBound' b _ = minBound == isoL (run b (A.unit (minBound :: Exp a)))
 prop_maxBound' b _ = maxBound == isoL (run b (A.unit (maxBound :: Exp a)))
 
+{-# INLINE prop_negate' #-}
+{-# INLINE prop_abs'    #-}
+{-# INLINE prop_signum' #-}
 prop_negate', prop_abs', prop_signum' :: (Num a, A.Num a, Eq a) => Backend -> proxy a -> a -> Bool
 prop_negate' = prop_unary_acc negate negate
 prop_abs'    = prop_unary_acc abs abs
 prop_signum' = prop_unary_acc signum signum
 
+{-# INLINE prop_add' #-}
+{-# INLINE prop_sub' #-}
+{-# INLINE prop_mul' #-}
 prop_add', prop_sub', prop_mul' :: (Num a, A.Num a, Eq a) => Backend -> proxy a -> a -> a -> Bool
 prop_add'    = prop_binary_acc (+) (+)
 prop_sub'    = prop_binary_acc (-) (-)
@@ -593,6 +609,12 @@ prop_mul'    = prop_binary_acc (*) (*)
 prop_fromInteger' :: forall proxy a. (Num a, Eq a, A.Num a) => Backend -> proxy a -> Integer -> Bool
 prop_fromInteger' b _ x = fromInteger x == isoL (run b (A.unit (fromInteger x :: Exp a)))
 
+{-# INLINE prop_quot'    #-}
+{-# INLINE prop_rem'     #-}
+{-# INLINE prop_div'     #-}
+{-# INLINE prop_mod'     #-}
+{-# INLINE prop_quotRem' #-}
+{-# INLINE prop_divMod'  #-}
 prop_quot', prop_rem', prop_div', prop_mod', prop_quotRem', prop_divMod' :: (Integral a, A.Integral a) => Backend -> proxy a -> a -> NonZero a -> Bool
 prop_quot'    b t x (NonZero y) = prop_binary_acc quot quot b t x y
 prop_rem'     b t x (NonZero y) = prop_binary_acc rem  rem  b t x y
@@ -601,6 +623,7 @@ prop_mod'     b t x (NonZero y) = prop_binary_acc mod  mod  b t x y
 prop_quotRem' b t x (NonZero y) = prop_binary_acc quotRem (A.lift $$ quotRem) b t x y
 prop_divMod'  b t x (NonZero y) = prop_binary_acc divMod  (A.lift $$ divMod)  b t x y
 
+{-# INLINE prop_complement' #-}
 prop_complement' :: (Bits a, A.Bits a) => Backend -> proxy a -> a -> Bool
 prop_complement' = prop_unary_acc complement A.complement
 
@@ -612,12 +635,18 @@ prop_xor'  = prop_binary_acc xor A.xor
 prop_band' = prop_binary_acc (.&.) (A..&.)
 prop_bor'  = prop_binary_acc (.|.) (A..|.)
 
+{-# INLINE prop_shiftL'  #-}
+{-# INLINE prop_shiftR'  #-}
+{-# INLINE prop_rotateL' #-}
+{-# INLINE prop_rotateR' #-}
 prop_shiftL', prop_shiftR', prop_rotateL', prop_rotateR' :: (FiniteBits a, A.FiniteBits a) => Backend -> proxy a -> a -> NonNegative Int -> Property
 prop_shiftL'  b t x (NonNegative n) = n < finiteBitSize x ==> prop_binary_acc' shiftL A.shiftL b t x n
 prop_shiftR'  b t x (NonNegative n) = n < finiteBitSize x ==> prop_binary_acc' shiftR A.shiftR b t x n
 prop_rotateL' b t x (NonNegative n) = n < finiteBitSize x ==> prop_binary_acc' rotateL A.rotateL b t x n
 prop_rotateR' b t x (NonNegative n) = n < finiteBitSize x ==> prop_binary_acc' rotateR A.rotateR b t x n
 
+{-# INLINE prop_shift'  #-}
+{-# INLINE prop_rotate' #-}
 prop_shift', prop_rotate' :: (FiniteBits a, A.FiniteBits a) => Backend -> proxy a -> a -> Int -> Property
 prop_shift'  b t x n = abs n < finiteBitSize x ==> prop_binary_acc' shift A.shift b t x n
 prop_rotate' b t x n = abs n < finiteBitSize x ==> prop_binary_acc' rotate A.rotate b t x n
@@ -625,15 +654,22 @@ prop_rotate' b t x n = abs n < finiteBitSize x ==> prop_binary_acc' rotate A.rot
 prop_bit' :: forall proxy a. (FiniteBits a, A.FiniteBits a) => Backend -> proxy a -> Bool
 prop_bit' b _ = all (prop_unary_acc (bit :: Int -> a) A.bit b Proxy) [0 .. finiteBitSize (undefined::a) - 1]
 
+{-# INLINE prop_testBit'       #-}
+{-# INLINE prop_setBit'        #-}
+{-# INLINE prop_clearBit'      #-}
+{-# INLINE prop_complementBit' #-}
 prop_testBit', prop_setBit', prop_clearBit', prop_complementBit' :: (FiniteBits a, A.FiniteBits a) => Backend -> proxy a -> a -> NonNegative Int -> Property
 prop_testBit'       b t x (NonNegative n) = n < finiteBitSize x ==> prop_binary_acc' testBit A.testBit b t x
 prop_setBit'        b t x (NonNegative n) = n < finiteBitSize x ==> prop_binary_acc' setBit A.setBit b t x
 prop_clearBit'      b t x (NonNegative n) = n < finiteBitSize x ==> prop_binary_acc' clearBit A.clearBit b t x
 prop_complementBit' b t x (NonNegative n) = n < finiteBitSize x ==> prop_binary_acc' complementBit A.complementBit b t x
 
+{-# INLINE prop_popCount' #-}
 prop_popCount' :: (FiniteBits a, A.FiniteBits a) => Backend -> proxy a -> a -> Bool
 prop_popCount' = prop_unary_acc popCount A.popCount
 
+{-# INLINE prop_clz' #-}
+{-# INLINE prop_ctz' #-}
 prop_clz', prop_ctz' :: (FiniteBits a, A.FiniteBits a) => Backend -> proxy a -> a -> Bool
 prop_clz' = prop_unary_acc countLeadingZeros  A.countLeadingZeros
 prop_ctz' = prop_unary_acc countTrailingZeros A.countTrailingZeros

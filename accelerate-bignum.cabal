@@ -97,6 +97,8 @@ test-suite accelerate-bignum-test
         -Wall
         -threaded
         -rtsopts
+        -fno-liberate-case
+        -funfolding-use-threshold=100
         -with-rtsopts=-N
         -with-rtsopts=-n2M
         -with-rtsopts=-A64M
