@@ -79,6 +79,11 @@ library
   cpp-options:
         -DUNBOXED_TUPLES=1
 
+  if impl(ghc == 8.0.1)
+    -- https://ghc.haskell.org/trac/ghc/ticket/12212
+    ghc-options:
+        -O0
+
 
 test-suite accelerate-bignum-test
   default-language:     Haskell2010
