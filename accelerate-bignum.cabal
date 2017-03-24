@@ -105,8 +105,7 @@ test-suite accelerate-bignum-test
         -threaded
         -rtsopts
         -fno-liberate-case
-        -fsimpl-tick-factor=200
-        -funfolding-use-threshold=1000
+        -funfolding-use-threshold=200
         -with-rtsopts=-N
         -with-rtsopts=-n2M
         -with-rtsopts=-A64M
@@ -147,7 +146,7 @@ benchmark accelerate-bignum-bench
         -threaded
         -rtsopts
         -fno-liberate-case
-        -funfolding-use-threshold=1000
+        -funfolding-use-threshold=200
         -- -with-rtsopts=-N
         -- -with-rtsopts=-n2M
         -- -with-rtsopts=-A64M
