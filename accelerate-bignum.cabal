@@ -91,6 +91,7 @@ test-suite accelerate-bignum-test
   type:                 exitcode-stdio-1.0
   hs-source-dirs:       test
   main-is:              Main.hs
+
   build-depends:
           base                          >= 4.8 && < 4.10
         , accelerate                    >= 0.16
@@ -104,7 +105,8 @@ test-suite accelerate-bignum-test
         -threaded
         -rtsopts
         -fno-liberate-case
-        -funfolding-use-threshold=100
+        -fsimpl-tick-factor=200
+        -funfolding-use-threshold=1000
         -with-rtsopts=-N
         -with-rtsopts=-n2M
         -with-rtsopts=-A64M
@@ -118,6 +120,48 @@ test-suite accelerate-bignum-test
     cpp-options:        -DACCELERATE_LLVM_PTX_BACKEND
     build-depends:
           accelerate-llvm-ptx
+
+benchmark accelerate-bignum-bench
+  default-language:     Haskell2010
+  type:                 exitcode-stdio-1.0
+  hs-source-dirs:       bench
+  main-is:              Main.hs
+  other-modules:
+      Accelerate
+      WideWord
+
+  build-depends:
+          base                          >= 4.8 && < 4.10
+        , accelerate
+        , accelerate-bignum
+        , accelerate-io                 >= 0.16
+        , criterion                     >= 1.0
+        , mwc-random                    >= 0.13
+        , vector                        >= 0.11
+        , vector-th-unbox               >= 0.2
+        , wide-word                     == 0.1.*
+
+  ghc-options:
+        -O2
+        -Wall
+        -threaded
+        -rtsopts
+        -fno-liberate-case
+        -funfolding-use-threshold=1000
+        -- -with-rtsopts=-N
+        -- -with-rtsopts=-n2M
+        -- -with-rtsopts=-A64M
+
+  if flag(llvm-cpu)
+    cpp-options:        -DACCELERATE_LLVM_NATIVE_BACKEND
+    build-depends:
+          accelerate-llvm-native
+
+  if flag(llvm-ptx)
+    cpp-options:        -DACCELERATE_LLVM_PTX_BACKEND
+    build-depends:
+          accelerate-llvm-ptx
+
 
 source-repository head
   type:     git

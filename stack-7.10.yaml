@@ -19,6 +19,11 @@ packages:
     - 'accelerate-llvm-native'
     - 'accelerate-llvm-ptx'
 
+- location:
+    git:    https://github.com/AccelerateHS/accelerate-io.git
+    commit: c8a618b563853b08f3501979e05e51d1303d7fa4
+  extra-dep: true
+
 extra-deps:
 - 'chaselev-deque-0.5.0.5'
 - 'cuda-0.7.5.3'
@@ -27,6 +32,7 @@ extra-deps:
 - 'llvm-hs-pure-4.0.0.0'
 - 'nvvm-0.7.5.1'
 - 'unique-0'
+- 'wide-word-0.1.0.2'
 
 # Override default flag values for local packages and extra-deps
 flags:
