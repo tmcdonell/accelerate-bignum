@@ -39,11 +39,12 @@ library
   other-modules:
       Data.Array.Accelerate.Internal.BigInt
       Data.Array.Accelerate.Internal.BigWord
+      Data.Array.Accelerate.Internal.LLVM.Native
+      Data.Array.Accelerate.Internal.LLVM.PTX
       Data.Array.Accelerate.Internal.Num2
       Data.Array.Accelerate.Internal.Orphans
       Data.Array.Accelerate.Internal.Orphans.Base
       Data.Array.Accelerate.Internal.Orphans.Elt
-      Data.Array.Accelerate.Internal.LLVM.Native
 
   build-depends:
           base                          >= 4.8 && < 4.10

@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP       #-}
 {-# LANGUAGE MagicHash #-}
 -- |
--- Module      : Data.Array.Accelerate.Internal.LLVM.Native
+-- Module      : Data.Array.Accelerate.Internal.LLVM.PTX
 -- Copyright   : [2016] Trevor L. McDonell
 -- License     : BSD3
 --
@@ -10,7 +10,7 @@
 -- Portability : non-portable (GHC extensions)
 --
 
-module Data.Array.Accelerate.Internal.LLVM.Native (
+module Data.Array.Accelerate.Internal.LLVM.PTX (
 
   -- Operators from Num2
   addWithCarryInt64#, mulWithCarryInt64#,
@@ -31,17 +31,17 @@ import Data.Array.Accelerate.Internal.BigInt
 import Data.Array.Accelerate.Internal.BigWord
 import Data.Array.Accelerate.Internal.Orphans.Elt                   ()
 
-#ifdef ACCELERATE_LLVM_NATIVE_BACKEND
+#ifdef ACCELERATE_LLVM_PTX_BACKEND
 import Data.Array.Accelerate.LLVM.CodeGen.Sugar
-import Data.Array.Accelerate.LLVM.Native.Foreign                    as A
+import Data.Array.Accelerate.LLVM.PTX.Foreign                       as A
 import qualified Data.Array.Accelerate.Internal.LLVM.Prim           as Prim
 #endif
 
 
-#ifdef ACCELERATE_LLVM_NATIVE_BACKEND
+#ifdef ACCELERATE_LLVM_PTX_BACKEND
 wrap2 :: (Elt a, Elt b, Elt c)
       => String                                       -- name of the operation
-      -> IRFun1 Native () ((a, b) -> c)               -- foreign implementation
+      -> IRFun1 PTX () ((a, b) -> c)                  -- foreign implementation
       -> (Exp a -> Exp b -> Exp c)                    -- fallback implementation
       -> Exp a
       -> Exp b
@@ -57,7 +57,7 @@ addWithCarryInt64#
     -> Exp Int64
     -> Exp Int64
     -> Exp (Int64, Word64)
-#ifdef ACCELERATE_LLVM_NATIVE_BACKEND
+#ifdef ACCELERATE_LLVM_PTX_BACKEND
 addWithCarryInt64# = wrap2 "addWithCarryInt64#" Prim.addWithCarryInt64#
 #else
 addWithCarryInt64# = id
@@ -68,7 +68,7 @@ mulWithCarryInt64#
     -> Exp Int64
     -> Exp Int64
     -> Exp (Int64, Word64)
-#ifdef ACCELERATE_LLVM_NATIVE_BACKEND
+#ifdef ACCELERATE_LLVM_PTX_BACKEND
 mulWithCarryInt64# = wrap2 "mulWithCarryInt64#" Prim.mulWithCarryInt64#
 #else
 mulWithCarryInt64# = id
@@ -79,7 +79,7 @@ addWithCarryWord64#
     -> Exp Word64
     -> Exp Word64
     -> Exp (Word64, Word64)
-#ifdef ACCELERATE_LLVM_NATIVE_BACKEND
+#ifdef ACCELERATE_LLVM_PTX_BACKEND
 addWithCarryWord64# = wrap2 "addWithCarryWord64#" Prim.addWithCarryWord64#
 #else
 addWithCarryWord64# = id
@@ -90,7 +90,7 @@ mulWithCarryWord64#
     -> Exp Word64
     -> Exp Word64
     -> Exp (Word64, Word64)
-#ifdef ACCELERATE_LLVM_NATIVE_BACKEND
+#ifdef ACCELERATE_LLVM_PTX_BACKEND
 mulWithCarryWord64# = wrap2 "mulWithCarryWord64#" Prim.mulWithCarryWord64#
 #else
 mulWithCarryWord64# = id
@@ -105,7 +105,7 @@ addInt128#
     -> Exp Int128
     -> Exp Int128
     -> Exp Int128
-#ifdef ACCELERATE_LLVM_NATIVE_BACKEND
+#ifdef ACCELERATE_LLVM_PTX_BACKEND
 addInt128# = wrap2 "addInt128#" Prim.addInt128#
 #else
 addInt128# = id
@@ -116,7 +116,7 @@ subInt128#
     -> Exp Int128
     -> Exp Int128
     -> Exp Int128
-#ifdef ACCELERATE_LLVM_NATIVE_BACKEND
+#ifdef ACCELERATE_LLVM_PTX_BACKEND
 subInt128# = wrap2 "subInt128#" Prim.subInt128#
 #else
 subInt128# = id
@@ -127,7 +127,7 @@ mulInt128#
     -> Exp Int128
     -> Exp Int128
     -> Exp Int128
-#ifdef ACCELERATE_LLVM_NATIVE_BACKEND
+#ifdef ACCELERATE_LLVM_PTX_BACKEND
 mulInt128# = wrap2 "mulInt128#" Prim.mulInt128#
 #else
 mulInt128# = id
@@ -138,7 +138,7 @@ addWord128#
     -> Exp Word128
     -> Exp Word128
     -> Exp Word128
-#ifdef ACCELERATE_LLVM_NATIVE_BACKEND
+#ifdef ACCELERATE_LLVM_PTX_BACKEND
 addWord128# = wrap2 "addWord128#" Prim.addWord128#
 #else
 addWord128# = id
@@ -149,7 +149,7 @@ subWord128#
     -> Exp Word128
     -> Exp Word128
     -> Exp Word128
-#ifdef ACCELERATE_LLVM_NATIVE_BACKEND
+#ifdef ACCELERATE_LLVM_PTX_BACKEND
 subWord128# = wrap2 "subWord128#" Prim.subWord128#
 #else
 subWord128# = id
@@ -160,7 +160,7 @@ mulWord128#
     -> Exp Word128
     -> Exp Word128
     -> Exp Word128
-#ifdef ACCELERATE_LLVM_NATIVE_BACKEND
+#ifdef ACCELERATE_LLVM_PTX_BACKEND
 mulWord128# = wrap2 "mulWord128#" Prim.mulWord128#
 #else
 mulWord128# = id
@@ -175,7 +175,7 @@ quotInt128#
     -> Exp Int128
     -> Exp Int128
     -> Exp Int128
-#ifdef ACCELERATE_LLVM_NATIVE_BACKEND
+#ifdef ACCELERATE_LLVM_PTX_BACKEND
 quotInt128# = wrap2 "quotInt128#" Prim.quotInt128#
 #else
 quotInt128# = id
@@ -186,7 +186,7 @@ remInt128#
     -> Exp Int128
     -> Exp Int128
     -> Exp Int128
-#ifdef ACCELERATE_LLVM_NATIVE_BACKEND
+#ifdef ACCELERATE_LLVM_PTX_BACKEND
 remInt128# = wrap2 "remInt128#" Prim.remInt128#
 #else
 remInt128# = id
@@ -197,7 +197,7 @@ quotRemInt128#
     -> Exp Int128
     -> Exp Int128
     -> Exp (Int128, Int128)
-#ifdef ACCELERATE_LLVM_NATIVE_BACKEND
+#ifdef ACCELERATE_LLVM_PTX_BACKEND
 quotRemInt128# = wrap2 "quotRemInt128#" Prim.quotRemInt128#
 #else
 quotRemInt128# = id
@@ -208,7 +208,7 @@ quotWord128#
     -> Exp Word128
     -> Exp Word128
     -> Exp Word128
-#ifdef ACCELERATE_LLVM_NATIVE_BACKEND
+#ifdef ACCELERATE_LLVM_PTX_BACKEND
 quotWord128# = wrap2 "quotWord128#" Prim.quotWord128#
 #else
 quotWord128# = id
@@ -219,7 +219,7 @@ remWord128#
     -> Exp Word128
     -> Exp Word128
     -> Exp Word128
-#ifdef ACCELERATE_LLVM_NATIVE_BACKEND
+#ifdef ACCELERATE_LLVM_PTX_BACKEND
 remWord128# = wrap2 "remWord128#" Prim.remWord128#
 #else
 remWord128# = id
@@ -230,7 +230,7 @@ quotRemWord128#
     -> Exp Word128
     -> Exp Word128
     -> Exp (Word128, Word128)
-#ifdef ACCELERATE_LLVM_NATIVE_BACKEND
+#ifdef ACCELERATE_LLVM_PTX_BACKEND
 quotRemWord128# = wrap2 "quotRemWord128#" Prim.quotRemWord128#
 #else
 quotRemWord128# = id

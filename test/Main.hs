@@ -606,6 +606,7 @@ prop_add'    = prop_binary_acc (+) (+)
 prop_sub'    = prop_binary_acc (-) (-)
 prop_mul'    = prop_binary_acc (*) (*)
 
+{-# INLINE prop_fromInteger' #-}
 prop_fromInteger' :: forall proxy a. (Num a, Eq a, A.Num a) => Backend -> proxy a -> Integer -> Bool
 prop_fromInteger' b _ x = fromInteger x == isoL (run b (A.unit (fromInteger x :: Exp a)))
 
