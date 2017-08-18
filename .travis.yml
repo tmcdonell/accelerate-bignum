@@ -73,8 +73,8 @@ script:
         travis_retry cabal haddock
         travis_retry cabal test
       else
-        travis_retry stack build --fast --no-terminal --haddock --no-haddock-deps --flag accelerate-bignum:-llvm-cpu --flag accelerate-bignum:-llvm-ptx
-        travis_retry stack test --fast --no-terminal --flag accelerate-bignum:-llvm-cpu --flag accelerate-bignum:-llvm-ptx
+        travis_retry stack build --no-terminal --haddock --no-haddock-deps --flag accelerate-bignum:-llvm-cpu --flag accelerate-bignum:-llvm-ptx
+        travis_retry stack test --no-terminal --flag accelerate-bignum:-llvm-cpu --flag accelerate-bignum:-llvm-ptx
       fi
 
 after_success:
