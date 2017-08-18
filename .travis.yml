@@ -1,9 +1,11 @@
 # vim: nospell
 #
 language: generic
-dist: precise
+dist: trusty
+sudo: false
 
 cache:
+  timeout: 600
   directories:
     - $HOME/.stack
     - .stack-work/install
@@ -37,6 +39,15 @@ matrix:
           packages:
             - *apt_packages
             - cabal-install-1.24
+
+    - env: GHC=8.2.1 CABAL=2.0
+      compiler: "GHC 8.2"
+      addons:
+        apt:
+          sources: *apt_sources
+          packages:
+            - *apt_packages
+            - cabal-install-2.0
 
   fast_finish: true
 
