@@ -2,49 +2,23 @@
 # vim: nospell
 
 resolver: ghc-8.2
-allow-newer: true # repa
 
 packages:
 - '.'
 
-- location:
-    git:    https://github.com/tmcdonell/accelerate.git
-    commit: aee5f0232e2cfdcf030e2a7ca0570e9ced017d63
-  extra-dep: true
-
-- location:
-    git:    https://github.com/tmcdonell/accelerate-llvm.git
-    commit: 3bc4216e527fa77149259dd19d3d4103ffed9518
-  extra-dep: true
-  subdirs:
-    - 'accelerate-llvm'
-    - 'accelerate-llvm-native'
-    - 'accelerate-llvm-ptx'
-
-- location:
-    git:    https://github.com/tmcdonell/accelerate-io.git
-    commit: 50962798ffbd09cea4b417aff65455da26def6b5
-  extra-dep: true
-
-- location:
-    git:    https://github.com/tmcdonell/cuda.git
-    commit: c39da756025d7a6fd9fb3fd368736ee05ced5df2
-  extra-dep: true
-
-- location:
-    git:    https://github.com/tmcdonell/nvvm.git
-    commit: 632323e2a7c3c75bb07a3edb35de47273dc4cd07
-  extra-dep: true
-
 extra-deps:
-# - 'cuda-0.8.0.0'
-# - 'nvvm-0.8.0.0'
 - 'abstract-deque-0.3'
+- 'accelerate-1.1.0.0'
+- 'accelerate-io-1.0.0.0'
+- 'accelerate-llvm-1.1.0.0'
+- 'accelerate-llvm-native-1.1.0.0'
+- 'accelerate-llvm-ptx-1.1.0.0'
 - 'atomic-primops-0.8.1'
 - 'attoparsec-0.13.2.0'
 - 'base-orphans-0.6'
 - 'cereal-0.5.4.0'
 - 'chaselev-deque-0.5.0.5'
+- 'cuda-0.8.0.0'
 - 'data-default-class-0.1.2.0'
 - 'dlist-0.8.0.3'
 - 'exceptions-0.8.3'
@@ -59,6 +33,7 @@ extra-deps:
 - 'math-functions-0.2.1.0'
 - 'mtl-2.2.1'
 - 'mwc-random-0.13.6.0'
+- 'nvvm-0.8.0.0'
 - 'primitive-0.6.2.0'
 - 'random-1.1'
 - 'scientific-0.3.5.1'
@@ -90,11 +65,10 @@ extra-deps:
 
 # bench
 - 'abstract-par-0.3.3'
-- 'aeson-1.2.1.0'
+- 'aeson-1.2.2.0'
 - 'base-compat-0.9.3'
-- 'blaze-builder-0.4.0.2'
 - 'bmp-1.2.6.3'
-- 'cassava-0.4.5.1'
+- 'cassava-0.5.0.0'
 - 'code-page-0.1.3'
 - 'criterion-1.2.2.0'
 - 'erf-2.0.0.0'
@@ -104,10 +78,12 @@ extra-deps:
 - 'microstache-1.0.1.1'
 - 'monad-par-0.3.4.8'
 - 'monad-par-extras-0.3.3'
-- 'old-locale-1.0.0.7'
+- 'Only-0.1'
 - 'parallel-3.2.1.1'
-- 'repa-3.4.1.2'
+- 'repa-3.4.1.3'
 - 'statistics-0.14.0.2'
+- 'text-short-0.1.1'
+- 'th-abstraction-0.2.6.0'
 - 'time-locale-compat-0.1.1.3'
 - 'uuid-types-1.0.3'
 - 'vector-algorithms-0.7.0.1'
@@ -115,8 +91,10 @@ extra-deps:
 
 # Override default flag values for local packages and extra-deps
 flags:
+  cassava:
+    pre-bytestring-0-10-4: false
   time-locale-compat:
-    old-time: false
+    old-locale: false
 
 # Extra global and per-package GHC options
 ghc-options:

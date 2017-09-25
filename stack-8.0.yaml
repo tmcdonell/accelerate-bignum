@@ -6,38 +6,15 @@ resolver: lts-9.0
 packages:
 - '.'
 
-- location:
-    git:    https://github.com/tmcdonell/accelerate.git
-    commit: aee5f0232e2cfdcf030e2a7ca0570e9ced017d63
-  extra-dep: true
-
-- location:
-    git:    https://github.com/tmcdonell/accelerate-llvm.git
-    commit: 3bc4216e527fa77149259dd19d3d4103ffed9518
-  extra-dep: true
-  subdirs:
-    - 'accelerate-llvm'
-    - 'accelerate-llvm-native'
-    - 'accelerate-llvm-ptx'
-
-- location:
-    git:    https://github.com/tmcdonell/accelerate-io.git
-    commit: 50962798ffbd09cea4b417aff65455da26def6b5
-  extra-dep: true
-
-- location:
-    git:    https://github.com/tmcdonell/cuda.git
-    commit: c39da756025d7a6fd9fb3fd368736ee05ced5df2
-  extra-dep: true
-
-- location:
-    git:    https://github.com/tmcdonell/nvvm.git
-    commit: 632323e2a7c3c75bb07a3edb35de47273dc4cd07
-  extra-dep: true
-
 extra-deps:
-# - 'cuda-0.8.0.0'
-# - 'nvvm-0.8.0.0'
+- 'accelerate-1.1.0.0'
+- 'accelerate-io-1.0.0.0'
+- 'accelerate-llvm-1.1.0.0'
+- 'accelerate-llvm-native-1.1.0.0'
+- 'accelerate-llvm-ptx-1.1.0.0'
+- 'Cabal-2.0.0.2'
+- 'cuda-0.8.0.0'
+- 'nvvm-0.8.0.0'
 - 'repa-3.4.1.2'
 - 'wide-word-0.1.0.3'
 
