@@ -113,10 +113,19 @@ test-suite test-llvm-native
 
   other-modules:
       Test.Base
+      Test.BigNum
+      Test.BigNum.Bits
+      Test.BigNum.Bounded
+      Test.BigNum.Enum
+      Test.BigNum.Eq
+      Test.BigNum.FiniteBits
+      Test.BigNum.Integral
+      Test.BigNum.Num
+      Test.BigNum.Num2
+      Test.BigNum.Ord
+      Test.BigNum.Real
       Test.Iso
       Test.ShowType
-      Test.BigNum
-      Test.BigNum.Num2
 
 
 -- test-suite accelerate-bignum-test

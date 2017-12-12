@@ -13,6 +13,8 @@
 
 module Test.Iso where
 
+import Hedgehog
+
 
 class Iso a b | b -> a where
   isoR :: a -> b
@@ -38,15 +40,41 @@ with_binary' :: Iso a b => proxy b -> (b -> b -> r) -> a -> a -> r
 with_binary' _ f x y = f (isoR x) (isoR y)
 
 
-prop_unary :: (Iso a b, Eq a) => (a -> a) -> (b -> b) -> proxy b -> a -> Bool
-prop_unary f g p x = f x == with_unary p g x
+prop_unary
+    :: (Iso a b, Eq a, Show a, MonadTest m)
+    => (a -> a)
+    -> (b -> b)
+    -> proxy b
+    -> a
+    -> m ()
+prop_unary f g p x = f x === with_unary p g x
 
-prop_unary' :: (Iso a b, Eq r) => (a -> r) -> (b -> r) -> proxy b -> a -> Bool
-prop_unary' f g p x = f x == with_unary' p g x
+prop_unary'
+    :: (Iso a b, Eq r, Show r, MonadTest m)
+    => (a -> r)
+    -> (b -> r)
+    -> proxy b
+    -> a
+    -> m ()
+prop_unary' f g p x = f x === with_unary' p g x
 
-prop_binary :: (Iso a b, Eq a) => (a -> a -> a) -> (b -> b -> b) -> proxy b -> a -> a -> Bool
-prop_binary f g p x y = f x y == with_binary p g x y
+prop_binary
+    :: (Iso a b, Eq a, Show a, MonadTest m)
+    => (a -> a -> a)
+    -> (b -> b -> b)
+    -> proxy b
+    -> a
+    -> a
+    -> m ()
+prop_binary f g p x y = f x y === with_binary p g x y
 
-prop_binary' :: (Iso a b, Eq r) => (a -> a -> r) -> (b -> b -> r) -> proxy b -> a -> a -> Bool
-prop_binary'  f g p x y = f x y == with_binary' p g x y
+prop_binary'
+    :: (Iso a b, Eq r, Show r, MonadTest m)
+    => (a -> a -> r)
+    -> (b -> b -> r)
+    -> proxy b
+    -> a
+    -> a
+    -> m ()
+prop_binary' f g p x y = f x y === with_binary' p g x y
 

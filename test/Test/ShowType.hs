@@ -21,6 +21,8 @@ import Data.Int
 import Data.Word
 import Text.Printf
 
+import Test.Base
+
 import Data.Array.Accelerate.Data.BigInt
 import Data.Array.Accelerate.Data.BigWord
 
@@ -44,4 +46,9 @@ instance Show (ArgType Word8)  where show _ = "Word8"
 instance Show (ArgType Word16) where show _ = "Word16"
 instance Show (ArgType Word32) where show _ = "Word32"
 instance Show (ArgType Word64) where show _ = "Word64"
+
+instance Show (ArgType I64)    where show _ = "I64"
+instance Show (ArgType U64)    where show _ = "U64"
+instance Show (ArgType II64)   where show _ = "II64"
+instance Show (ArgType UU64)   where show _ = "UU64"
 

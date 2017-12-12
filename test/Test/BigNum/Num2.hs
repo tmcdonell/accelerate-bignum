@@ -42,26 +42,26 @@ test_num2 =
             -> TestTree
     testElt e =
       testGroup (showType e)
-        [ testProperty "addWithCarry" $ test_addWithCarry e
-        , testProperty "mulWithCarry" $ test_mulWithCarry e
+        [ testProperty "addWithCarry" $ prop_addWithCarry e
+        , testProperty "mulWithCarry" $ prop_mulWithCarry e
         ]
 
 
-test_addWithCarry
+prop_addWithCarry
     :: (Num2 e, Integral e, Show e, FiniteBits (Unsigned e), Integral (Unsigned e))
     => Gen e
     -> Property
-test_addWithCarry e =
+prop_addWithCarry e =
   property $ do
     x <- forAll e
     y <- forAll e
     uncurry toInteger2 (addWithCarry x y) === toInteger x + toInteger y
 
-test_mulWithCarry
+prop_mulWithCarry
     :: (Num2 e, Integral e, Show e, FiniteBits (Unsigned e), Integral (Unsigned e))
     => Gen e
     -> Property
-test_mulWithCarry e =
+prop_mulWithCarry e =
   property $ do
     x <- forAll e
     y <- forAll e
