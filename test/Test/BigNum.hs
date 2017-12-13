@@ -22,6 +22,7 @@ import Test.BigNum.Real
 import Test.BigNum.Integral
 import Test.BigNum.Bits
 import Test.BigNum.FiniteBits
+import Test.BigNum.FromIntegral
 
 import Test.Tasty
 import System.Environment
@@ -33,15 +34,16 @@ bignum runN = do
   me <- getProgName
   defaultMain $
     testGroup me
-      [ test_num2
-      , test_eq
-      , test_ord
-      , test_bounded
+      [ test_num2 runN
+      , test_eq runN
+      , test_ord runN
+      , test_bounded runN
       , test_enum
-      , test_num
+      , test_num runN
       , test_real
-      , test_integral
-      , test_bits
-      , test_finitebits
+      , test_integral runN
+      , test_bits runN
+      , test_finitebits runN
+      , test_fromIntegral runN
       ]
 

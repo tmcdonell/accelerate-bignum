@@ -1,9 +1,7 @@
-{-# LANGUAGE ConstraintKinds            #-}
-{-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE FlexibleInstances          #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
-{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE ConstraintKinds   #-}
+{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE RankNTypes        #-}
 -- |
 -- Module      : Test.Base
 -- Copyright   : [2017] Trevor L. McDonell
@@ -15,8 +13,6 @@
 --
 
 module Test.Base where
-
-import Test.Iso
 
 import Data.Array.Accelerate                                        ( Acc, Arrays, Array, Shape, Elt, fromList )
 import Data.Array.Accelerate.Array.Sugar                            ( size )
@@ -60,6 +56,15 @@ i32 = Gen.int32 Range.linearBounded
 i64 :: Gen Int64
 i64 = Gen.int64 Range.linearBounded
 
+i96 :: Gen Int96
+i96 = I2 <$> i32 <*> w64
+
+i128 :: Gen Int128
+i128 = I2 <$> i64 <*> w64
+
+i192 :: Gen Int192
+i192 = I2 <$> i64 <*> w128
+
 w8 :: Gen Word8
 w8 = Gen.word8 Range.linearBounded
 
@@ -72,11 +77,20 @@ w32 = Gen.word32 Range.linearBounded
 w64 :: Gen Word64
 w64 = Gen.word64 Range.linearBounded
 
+w96 :: Gen Word96
+w96 = W2 <$> w32 <*> w64
+
+w128 :: Gen Word128
+w128 = W2 <$> w64 <*> w64
+
+w192 :: Gen Word192
+w192 = W2 <$> w64 <*> w128
+
+
 integer :: Gen Integer
 integer =
   let b = 2 * toInteger (maxBound :: Int64)
   in  Gen.integral (Range.linearFrom 0 (-b) b)
-
 
 except :: Gen e -> (e -> Bool) -> Gen e
 except gen f  = do
@@ -84,49 +98,8 @@ except gen f  = do
   when (f v) Gen.discard
   return v
 
-
 toInteger2 :: (Integral a, Integral b, FiniteBits b) => a -> b -> Integer
 toInteger2 h l = toInteger h * 2 ^ finiteBitSize l + toInteger l
-
-
-newtype I64 = I64 (BigInt  Int32  Word32)
-  deriving (Show, Eq, Ord, Bounded, Num, Real, Enum, Integral, Bits, FiniteBits)
-
-newtype U64 = U64 (BigWord Word32 Word32)
-  deriving (Show, Eq, Ord, Bounded, Num, Real, Enum, Integral, Bits, FiniteBits)
-
-newtype II64 = II64 (BigInt  Int16  (BigWord Word16 Word32))
-  deriving (Show, Eq, Ord, Bounded, Num, Real, Enum, Integral, Bits, FiniteBits)
-
-newtype UU64 = UU64 (BigWord Word16 (BigWord Word16 Word32))
-  deriving (Show, Eq, Ord, Bounded, Num, Real, Enum, Integral, Bits, FiniteBits)
-
-instance Iso Int64 I64 where
-  isoR w              = I64 (I2 (fromIntegral (w `shiftR` 32)) (fromIntegral w))
-  isoL (I64 (I2 h l)) = fromIntegral h `shiftL` 32 .|. fromIntegral l
-
-instance Iso Word64 U64 where
-  isoR w              = U64 (W2 (fromIntegral (w `shiftR` 32)) (fromIntegral w))
-  isoL (U64 (W2 h l)) = fromIntegral h `shiftL` 32 .|. fromIntegral l
-
-instance Iso Int64 II64 where
-  isoR w
-    = II64 (I2 (fromIntegral (w `shiftR` 48)) (W2 (fromIntegral (w `shiftR` 32)) (fromIntegral w)))
-
-  isoL (II64 (I2 h (W2 lh ll)))
-    =  fromIntegral h  `shiftL` 48
-   .|. fromIntegral lh `shiftL` 32
-   .|. fromIntegral ll
-
-instance Iso Word64 UU64 where
-  isoR w
-    = UU64 (W2 (fromIntegral (w `shiftR` 48)) (W2 (fromIntegral (w `shiftR` 32)) (fromIntegral w)))
-
-  isoL (UU64 (W2 h (W2 lh ll)))
-    =  fromIntegral h  `shiftL` 48
-   .|. fromIntegral lh `shiftL` 32
-   .|. fromIntegral ll
-
 
 infixr 0 $$
 ($$) :: (b -> a) -> (c -> d -> b) -> c -> d -> a

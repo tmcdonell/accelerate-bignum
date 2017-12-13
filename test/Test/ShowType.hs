@@ -21,7 +21,7 @@ import Data.Int
 import Data.Word
 import Text.Printf
 
-import Test.Base
+import Test.Types
 
 import Data.Array.Accelerate.Data.BigInt
 import Data.Array.Accelerate.Data.BigWord

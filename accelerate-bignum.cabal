@@ -119,6 +119,7 @@ test-suite test-llvm-native
       Test.BigNum.Enum
       Test.BigNum.Eq
       Test.BigNum.FiniteBits
+      Test.BigNum.FromIntegral
       Test.BigNum.Integral
       Test.BigNum.Num
       Test.BigNum.Num2
@@ -126,6 +127,7 @@ test-suite test-llvm-native
       Test.BigNum.Real
       Test.Iso
       Test.ShowType
+      Test.Types
 
 
 -- test-suite accelerate-bignum-test

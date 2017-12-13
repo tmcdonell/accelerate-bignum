@@ -15,6 +15,7 @@ module Test.BigNum.Real ( test_real )
 
 import Test.Iso
 import Test.Base
+import Test.Types
 import Test.ShowType
 
 import Data.Proxy

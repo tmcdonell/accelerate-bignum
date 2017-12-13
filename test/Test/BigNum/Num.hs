@@ -1,5 +1,7 @@
-{-# LANGUAGE ConstraintKinds  #-}
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ConstraintKinds     #-}
+{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE RankNTypes          #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 -- |
 -- Module      : Test.BigNum.Num
 -- Copyright   : [2017] Trevor L. McDonell
@@ -15,7 +17,10 @@ module Test.BigNum.Num ( test_num )
 
 import Test.Iso
 import Test.Base
+import Test.Types
 import Test.ShowType
+
+import qualified Data.Array.Accelerate                              as A
 
 import Data.Proxy
 import Hedgehog
@@ -23,13 +28,17 @@ import Test.Tasty
 import Test.Tasty.Hedgehog
 
 
-test_num :: TestTree
-test_num =
+test_num :: RunN -> TestTree
+test_num runN =
   testGroup "Num"
     [ testElt i64 (Proxy :: Proxy I64)
     , testElt w64 (Proxy :: Proxy U64)
     , testElt i64 (Proxy :: Proxy II64)
     , testElt w64 (Proxy :: Proxy UU64)
+    , testAcc w96
+    , testAcc i96
+    , testAcc w128
+    , testAcc i128
     ]
   where
     testElt :: (Iso a b, Eq a, Eq b, Num a, Num b, Show a, Show b, Show (ArgType b))
@@ -45,6 +54,20 @@ test_num =
         , testProperty "(-)"         $ prop_sub a b
         , testProperty "(*)"         $ prop_mul a b
         , testProperty "fromInteger" $ prop_fromInteger b
+        ]
+
+    testAcc :: (Eq a, Num a, A.Num a, Show (ArgType a))
+            => Gen a
+            -> TestTree
+    testAcc a =
+      testGroup (showType a)
+        [ testProperty "negate"      $ prop_acc_negate runN a
+        , testProperty "abs"         $ prop_acc_abs runN a
+        , testProperty "signum"      $ prop_acc_signum runN a
+        , testProperty "(+)"         $ prop_acc_add runN a
+        , testProperty "(-)"         $ prop_acc_sub runN a
+        , testProperty "(*)"         $ prop_acc_mul runN a
+        , testProperty "fromInteger" $ prop_acc_fromInteger runN a
         ]
 
 
@@ -119,4 +142,78 @@ prop_fromInteger t =
   property $ do
     x <- forAll integer
     fromInteger x === fromIso t (fromInteger x)
+
+
+prop_acc_negate
+    :: (Num a, A.Num a, Eq a)
+    => RunN
+    -> Gen a
+    -> Property
+prop_acc_negate runN a =
+  property $ do
+    x <- forAll a
+    prop_acc_unary negate negate runN x
+
+prop_acc_abs
+    :: (Num a, A.Num a, Eq a)
+    => RunN
+    -> Gen a
+    -> Property
+prop_acc_abs runN a =
+  property $ do
+    x <- forAll a
+    prop_acc_unary abs abs runN x
+
+prop_acc_signum
+    :: (Num a, A.Num a, Eq a)
+    => RunN
+    -> Gen a
+    -> Property
+prop_acc_signum runN a =
+  property $ do
+    x <- forAll a
+    prop_acc_unary signum signum runN x
+
+prop_acc_add
+    :: (Num a, A.Num a, Eq a)
+    => RunN
+    -> Gen a
+    -> Property
+prop_acc_add runN a =
+  property $ do
+    x <- forAll a
+    y <- forAll a
+    prop_acc_binary (+) (+) runN x y
+
+prop_acc_sub
+    :: (Num a, A.Num a, Eq a)
+    => RunN
+    -> Gen a
+    -> Property
+prop_acc_sub runN a =
+  property $ do
+    x <- forAll a
+    y <- forAll a
+    prop_acc_binary (-) (-) runN x y
+
+prop_acc_mul
+    :: (Num a, A.Num a, Eq a)
+    => RunN
+    -> Gen a
+    -> Property
+prop_acc_mul runN a =
+  property $ do
+    x <- forAll a
+    y <- forAll a
+    prop_acc_binary (*) (*) runN x y
+
+prop_acc_fromInteger
+    :: forall proxy a. (Num a, Eq a, A.Num a)
+    => RunN
+    -> proxy a
+    -> Property
+prop_acc_fromInteger runN _ =
+  property $ do
+    x <- forAll integer
+    fromInteger x === isoL (runN (A.unit (fromInteger x :: A.Exp a)))
 
