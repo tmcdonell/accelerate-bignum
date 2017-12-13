@@ -16,6 +16,7 @@ extra-deps:
 - 'cuda-0.8.0.0'
 - 'nvvm-0.8.0.0'
 - 'repa-3.4.1.2'
+- 'tasty-hedgehog-0.1.0.1'
 - 'wide-word-0.1.0.3'
 
 # Override default flag values for local packages and extra-deps
