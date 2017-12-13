@@ -2,7 +2,7 @@
 #
 language: generic
 dist: trusty
-sudo: false
+sudo: required
 
 cache:
   timeout: 600
@@ -11,22 +11,29 @@ cache:
     - .stack-work/install
 
 before_cache:
-  - rm -rf $(stack path --local-install-root)/bin
+  # - rm -rf $(stack path --local-install-root)/bin
   - rm -rf $(stack path --local-install-root)/doc
 
 addons:
   apt:
     sources: &apt_sources
       - hvr-ghc
+      - ubuntu-toolchain-r-test
+      - llvm-toolchain-trusty
+      - sourceline: 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-4.0 main'
+        key_url: 'http://apt.llvm.org/llvm-snapshot.gpg.key'
+      - sourceline: 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-5.0 main'
+        key_url: 'http://apt.llvm.org/llvm-snapshot.gpg.key'
 
     packages: &apt_packages
+      - g++-4.8
       - libgmp-dev
       - happy-1.19.5
       - alex-3.1.7
 
 matrix:
   include:
-    - env: GHC=7.10.3 CABAL=1.22
+    - env: GHC=7.10.3 CABAL=1.22 LLVM=4.0.0 CUDA=8.0.61-1
       compiler: "GHC 7.10"
       addons:
         apt:
@@ -34,8 +41,9 @@ matrix:
           packages:
             - *apt_packages
             - cabal-install-1.22
+            - llvm-4.0-dev
 
-    - env: GHC=8.0.2 CABAL=1.24
+    - env: GHC=8.0.2 CABAL=1.24 LLVM=4.0.0 CUDA=8.0.61-1
       compiler: "GHC 8.0"
       addons:
         apt:
@@ -43,8 +51,9 @@ matrix:
           packages:
             - *apt_packages
             - cabal-install-1.24
+            - llvm-4.0-dev
 
-    - env: GHC=8.2.1 CABAL=2.0
+    - env: GHC=8.2.1 CABAL=2.0 LLVM=5.0.0 CUDA=8.0.61-1
       compiler: "GHC 8.2"
       addons:
         apt:
@@ -52,34 +61,32 @@ matrix:
           packages:
             - *apt_packages
             - cabal-install-2.0
+            - llvm-5.0-dev
 
   fast_finish: true
 
 before_install:
   - export PATH=/opt/cabal/$CABAL/bin:/opt/alex/3.1.7/bin:/opt/happy/1.19.5/bin:$HOME/.cabal/bin:$PATH
+  - source .travis/install-cuda-trusty.sh
   - source .travis/install-stack.sh
+  - travis_retry stack install c2hs --fast --no-terminal
 
 install:
   - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
   - cabal --version
   - stack --version
-  - |
-      if [ ${GHC} == head -o ! -e stack.yaml ]; then
-        travis_retry cabal install --only-dependencies
-      else
-        travis_retry stack build --test --only-dependencies --fast --no-terminal --no-haddock-deps --flag accelerate-bignum:-llvm-cpu --flag accelerate-bignum:-llvm-ptx
-      fi
+  - c2hs --version
+  - llc --version; true
+  - opt --version; true
+  - travis_retry travis_wait 60 stack build --fast --test --no-terminal --only-dependencies --no-copy-bins
 
 script:
+  - travis_retry stack build --no-terminal --test --no-run-tests --haddock --no-haddock-deps
   - |
-      if [ ${GHC} == head -o ! -e stack.yaml ]; then
-        travis_retry cabal install
-        travis_retry cabal haddock
-        travis_retry cabal test
-      else
-        travis_retry stack build --no-terminal --haddock --no-haddock-deps --flag accelerate-bignum:-llvm-cpu --flag accelerate-bignum:-llvm-ptx
-        travis_retry stack test --no-terminal --flag accelerate-bignum:-llvm-cpu --flag accelerate-bignum:-llvm-ptx
-      fi
+      case ${GHC} in
+        7.*) true ;; # some tests failing with 'RTLD_NEXT not available' (dlsym error)
+        *  ) travis_retry stack test accelerate-bignum:test-llvm-native 2>/dev/null || exit 1 ;;
+      esac
 
 after_success:
   - source .travis/update-accelerate-buildbot.sh
