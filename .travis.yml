@@ -78,7 +78,7 @@ install:
   - c2hs --version
   - llc --version; true
   - opt --version; true
-  - travis_retry stack build --fast --test --no-terminal --only-dependencies --no-copy-bins
+  - travis_retry travis_wait 60 stack build --fast --test --no-terminal --only-dependencies --no-copy-bins
 
 script:
   - travis_retry stack build --no-terminal --test --no-run-tests --haddock --no-haddock-deps
