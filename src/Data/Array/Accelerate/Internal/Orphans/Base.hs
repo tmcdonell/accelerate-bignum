@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP                   #-}
 {-# LANGUAGE ConstraintKinds       #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
@@ -37,7 +38,7 @@ import Data.Array.Accelerate.Internal.Orphans.Elt                   ()
 import qualified Data.Array.Accelerate.Internal.LLVM.Native         as CPU
 import qualified Data.Array.Accelerate.Internal.LLVM.PTX            as PTX
 
-import Data.Array.Accelerate                                        as A
+import Data.Array.Accelerate                                        as A hiding ( fromInteger )
 import Data.Array.Accelerate.Array.Sugar                            as A ( eltType )
 import Data.Array.Accelerate.Analysis.Match                         as A
 import Data.Array.Accelerate.Data.Bits                              as A
@@ -130,9 +131,12 @@ instance ( Integral a, FiniteBits a, FromIntegral a b, Num2 (Exp a), Bounded a
          , Num (BigWord a b)
          , Num2 (Exp (BigWord a b))
          , BigWordCtx a b
+#if MIN_VERSION_accelerate(1,2,0)
+         , Enum (BigWord a b)
+#endif
          )
     => P.Integral (Exp (BigWord a b)) where
-  toInteger = error "Prelude.toInteger not supported for Accelerate types"
+  toInteger = error "Prelude.toInteger is not supported for Accelerate types"
 
   {-# SPECIALIZE div    :: Exp Word128 -> Exp Word128 -> Exp Word128 #-}
   {-# SPECIALIZE mod    :: Exp Word128 -> Exp Word128 -> Exp Word128 #-}
@@ -529,9 +533,12 @@ instance ( Integral a
          , Num2 (Exp (BigInt a b))
          , Num2 (Exp (BigWord (Unsigned a) b))
          , BigIntCtx a b
+#if MIN_VERSION_accelerate(1,2,0)
+         , Enum (BigInt a b)
+#endif
          )
     => P.Integral (Exp (BigInt a b)) where
-  toInteger = error "Prelude.toInteger not supported for Accelerate types"
+  toInteger = error "Prelude.toInteger is not supported for Accelerate types"
 
   {-# SPECIALIZE quot :: Exp Int128 -> Exp Int128 -> Exp Int128 #-}
   quot | Just Refl <- matchInt128 (undefined::BigInt a b) = CPU.quotInt128# $ PTX.quotInt128# go
@@ -886,6 +893,24 @@ $(runQ $ do
         bigIntT :: (Int,Int) -> Q Type
         bigIntT (hi,lo) = intT (hi+lo)
 
+#if MIN_VERSION_accelerate(1,2,0)
+        thEnum :: (Int,Int) -> Q [Dec]
+        thEnum big =
+          [d|
+              instance P.Enum (Exp $(bigIntT big)) where
+                succ x   = x + 1
+                pred x   = x - 1
+                toEnum   = error "Prelude.toEnum is not supported for Accelerate types"
+                fromEnum = error "Prelude.fromEnum is not supported for Accelerate types"
+
+              instance P.Enum (Exp $(bigWordT big)) where
+                succ x   = x + 1
+                pred x   = x - 1
+                toEnum   = error "Prelude.toEnum is not supported for Accelerate types"
+                fromEnum = error "Prelude.fromEnum is not supported for Accelerate types"
+            |]
+#endif
+
         thFromIntegral1 :: (Int,Int) -> Q [Dec]
         thFromIntegral1 big =
           [d|
@@ -945,9 +970,14 @@ $(runQ $ do
                   in  fromIntegral lo
             |]
     --
+#if MIN_VERSION_accelerate(1,2,0)
+    e1 <- sequence [ thEnum x            | x <- bigNums ]
+#else
+    e1 <- return []
+#endif
     d1 <- sequence [ thFromIntegral1 x   | x <- bigNums ]
     d2 <- sequence [ thFromIntegral2 x y | x <- bigNums, y <- lilNums ]
     --
-    return $ P.concat (d1 P.++ d2)
+    return $ P.concat (e1 P.++ d1 P.++ d2)
  )
 
