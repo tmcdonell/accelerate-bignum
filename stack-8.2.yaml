@@ -1,21 +1,26 @@
 # For more information, see: https://github.com/commercialhaskell/stack/blob/release/doc/yaml_configuration.md
 # vim: nospell
 
-resolver: lts-10.0
+resolver: lts-11.2
 
 packages:
 - '.'
 
 extra-deps:
 - git:    https://github.com/tmcdonell/accelerate.git
-  commit: 1aa13b896811541dcd4b97b6c305e229d657d51e
+  commit: 0a5d8f622f9c7541afbbf3d6848d6fa636e510d2
 
 - git:    https://github.com/tmcdonell/accelerate-llvm.git
-  commit: 9ccfc0969b8a3ac6d9280e890ca805c3b6ebc2dd
+  commit: fd2cb894c702e3cb4a243bc54586e018163f8d5b
   subdirs:
     - 'accelerate-llvm'
     - 'accelerate-llvm-native'
     - 'accelerate-llvm-ptx'
+
+- git:    https://github.com/tmcdonell/accelerate-io.git
+  commit: 652e4a1831f144628a0ca8cae582032815dd64c9
+
+- 'tasty-hedgehog-0.2.0.0'
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
@@ -30,7 +35,7 @@ extra-deps:
 # system-ghc: true
 
 # Require a specific version of stack, using version ranges
-require-stack-version: ">= 1.6"
+# require-stack-version: ">= 1.6"
 
 # Override the architecture used by stack, especially useful on Windows
 # arch: i386
