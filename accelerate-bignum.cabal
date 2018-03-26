@@ -18,8 +18,11 @@ maintainer:             Trevor L. McDonell <tmcdonell@cse.unsw.edu.au>
 copyright:              BSD3
 category:               Compilers/Interpreters, Concurrency, Data, Parallelism
 build-type:             Simple
-extra-source-files:     README.md
 cabal-version:          >= 1.10
+
+extra-source-files:
+  README.md
+  CHANGELOG.md
 
 flag llvm-cpu
   description:          Enable primpos for the LLVM CPU backend
