@@ -1,13 +1,13 @@
 # vim: nospell
 #
-language: generic
+language: minimal
 dist: trusty
 sudo: required
 
 cache:
   timeout: 600
   directories:
-    - $HOME/.stack
+    - $HOME/.stack/snapshots
     - .stack-work/install
 
 before_cache:
@@ -20,10 +20,9 @@ addons:
       - hvr-ghc
       - ubuntu-toolchain-r-test
       - llvm-toolchain-trusty
-      - sourceline: 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-4.0 main'
-        key_url: 'http://apt.llvm.org/llvm-snapshot.gpg.key'
-      - sourceline: 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-5.0 main'
-        key_url: 'http://apt.llvm.org/llvm-snapshot.gpg.key'
+      - llvm-toolchain-trusty-4.0
+      - llvm-toolchain-trusty-5.0
+      - llvm-toolchain-trusty-6.0
 
     packages: &apt_packages
       - g++-4.8
@@ -53,7 +52,7 @@ matrix:
             - cabal-install-1.24
             - llvm-4.0-dev
 
-    - env: GHC=8.2.1 CABAL=2.0 LLVM=5.0.0 CUDA=8.0.61-1
+    - env: GHC=8.2.2 CABAL=2.0 LLVM=5.0.0 CUDA=8.0.61-1
       compiler: "GHC 8.2"
       addons:
         apt:
@@ -62,6 +61,16 @@ matrix:
             - *apt_packages
             - cabal-install-2.0
             - llvm-5.0-dev
+
+    - env: GHC=8.4.1 CABAL=2.0 LLVM=6.0.0 CUDA=8.0.61-1
+      compiler: "GHC 8.4"
+      addons:
+        apt:
+          sources: *apt_sources
+          packages:
+            - *apt_packages
+            - cabal-install-2.0
+            - llvm-6.0-dev
 
   fast_finish: true
 
@@ -72,12 +81,13 @@ before_install:
   - travis_retry stack install c2hs --fast --no-terminal
 
 install:
-  - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
+  - echo "$(stack exec ghc -- --version) [$(stack exec ghc -- --print-project-git-commit-id 2> /dev/null || echo '?')]"
   - cabal --version
   - stack --version
   - c2hs --version
   - llc --version; true
   - opt --version; true
+  - stack build --dry-run
   - travis_retry travis_wait 60 stack build --fast --test --no-terminal --only-dependencies --no-copy-bins
 
 script:
