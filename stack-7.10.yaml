@@ -1,67 +1,41 @@
 # For more information, see: https://github.com/commercialhaskell/stack/blob/release/doc/yaml_configuration.md
 # vim: nospell
 
-resolver: lts-6.30
+resolver: lts-6.35
 
 packages:
 - '.'
-- location:
-    git:    https://github.com/AccelerateHS/accelerate.git
-    commit: 22d49629ade9b9b8e93985362323b1259155df37
-  extra-dep: true
-
-- location:
-    git:    https://github.com/AccelerateHS/accelerate-llvm.git
-    commit: 2bb0fb1c7608b4b37269a0a631dc2289bff2f560
-  extra-dep: true
-  subdirs:
-    - 'accelerate-llvm'
-    - 'accelerate-llvm-native'
-    - 'accelerate-llvm-ptx'
-
-- location:
-    git:    https://github.com/AccelerateHS/accelerate-io.git
-    commit: c8a618b563853b08f3501979e05e51d1303d7fa4
-  extra-dep: true
 
 extra-deps:
+- 'accelerate-1.1.1.0'
+- 'accelerate-io-1.0.0.1'
+- 'accelerate-llvm-1.1.0.0'
+- 'accelerate-llvm-native-1.1.0.1'
+- 'accelerate-llvm-ptx-1.1.0.1'
+- 'Cabal-2.0.1.1'
 - 'chaselev-deque-0.5.0.5'
-- 'cuda-0.7.5.3'
+- 'cuda-0.9.0.3'
+- 'hedgehog-0.5.3'
 - 'libffi-0.1'
-- 'llvm-hs-4.0.0.0'
-- 'llvm-hs-pure-4.0.0.0'
-- 'nvvm-0.7.5.1'
+- 'llvm-hs-4.2.0'
+- 'llvm-hs-pure-4.1.0.0'
+- 'nvvm-0.8.0.3'
+- 'process-1.4.3.0'
+- 'tasty-hedgehog-0.2.0.0'
 - 'unique-0'
-- 'wide-word-0.1.0.2'
+- 'wide-word-0.1.0.3'
+- 'wl-pprint-annotated-0.1.0.0'
 
 # Override default flag values for local packages and extra-deps
 flags:
   llvm-hs:
     shared-llvm: true
     semigroups: true
-  accelerate:
-    debug: true
-    ekg: false
-    bounds-checks: true
-    internal-checks: false
-    unsafe-checks: false
-  accelerate:
-    debug: true
-    ekg: false
-    bounds-checks: true
-    internal-checks: false
-    unsafe-checks: false
-  accelerate-llvm-native:
-    debug: true
-  accelerate-llvm-ptx:
-    debug: true
-    nvvm: false
-  accelerate-bignum:
-    llvm-cpu: true
-    llvm-ptx: true
+  llvm-hs-pure:
+    semigroups: true
 
 # Extra package databases containing global packages
-extra-package-dbs: []
+# extra-package-dbs: []
 
 # Control whether we use the GHC we find on the path
 # system-ghc: true
