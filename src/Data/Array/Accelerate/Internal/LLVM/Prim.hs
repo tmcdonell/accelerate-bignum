@@ -39,7 +39,6 @@ import Data.Array.Accelerate.Internal.BigInt
 import Data.Array.Accelerate.Internal.BigWord
 import Data.Array.Accelerate.Internal.Orphans.Elt                   ()
 
-import Data.Array.Accelerate.LLVM.CodeGen.Downcast
 import Data.Array.Accelerate.LLVM.CodeGen.IR                        ( IR(..), Operands(..) )
 import Data.Array.Accelerate.LLVM.CodeGen.Monad                     ( CodeGen, freshName, instr_ )
 import Data.Array.Accelerate.LLVM.CodeGen.Sugar
@@ -47,11 +46,16 @@ import qualified Data.Array.Accelerate.LLVM.CodeGen.Arithmetic      as A
 import qualified LLVM.AST.Type.Name                                 as A
 import qualified LLVM.AST.Type.Operand                              as A
 import qualified LLVM.AST.Type.Representation                       as A
+#if MIN_VERSION_accelerate_llvm(1,3,0)
+import LLVM.AST.Type.Downcast                                       ( downcast )
+#else
+import Data.Array.Accelerate.LLVM.CodeGen.Downcast                  ( downcast )
+#endif
 
 import LLVM.AST.Constant                                            ( Constant(Int) )
 import LLVM.AST.Instruction                                         hiding ( nsw, nuw )
-import LLVM.AST.Name
-import LLVM.AST.Operand
+import LLVM.AST.Name                                                ( Name(..) )
+import LLVM.AST.Operand                                             ( Operand(..) )
 import LLVM.AST.Type
 
 
