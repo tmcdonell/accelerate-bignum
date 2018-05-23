@@ -1,5 +1,5 @@
 name:                   accelerate-bignum
-version:                0.2.0.0
+version:                0.3.0.0
 synopsis:               Fixed-length large integer arithmetic for Accelerate
 description:
   This package provides fixed-length large integer types and arithmetic
@@ -225,7 +225,7 @@ source-repository head
 
 source-repository this
   type:     git
-  tag:      0.2.0.0
+  tag:      0.3.0.0
   location: https://github.com/tmcdonell/accelerate-bignum
 
 -- vim: nospell
