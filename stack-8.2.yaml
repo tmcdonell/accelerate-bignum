@@ -18,6 +18,7 @@ extra-deps:
     - 'accelerate-llvm-ptx'
 
 - 'accelerate-io-1.2.0.0'
+- 'half-0.3'
 - 'tasty-hedgehog-0.2.0.0'
 
 # Override default flag values for local packages and extra-deps
