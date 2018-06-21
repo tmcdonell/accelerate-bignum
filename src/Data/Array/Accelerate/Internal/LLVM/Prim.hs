@@ -78,7 +78,11 @@ mulWithCarryWord64# :: IRFun1 arch () ((Word64, Word64) -> (Word64, Word64))
 mulWithCarryWord64# = IRFun1 $ A.uncurry (prim_wideningWord64 (Mul nsw nuw))
 
 
-prim_wideningInt64 :: (Operand -> Operand -> InstructionMetadata -> Instruction) -> IR Int64 -> IR Int64 -> CodeGen (IR (Int64, Word64))
+prim_wideningInt64
+    :: (Operand -> Operand -> InstructionMetadata -> Instruction)
+    -> IR Int64
+    -> IR Int64
+    -> CodeGen arch (IR (Int64, Word64))
 prim_wideningInt64 op (IR (OP_Int64 x)) (IR (OP_Int64 y)) = do
   a     <- instr i128 (SExt (downcast x) i128 md)
   b     <- instr i128 (SExt (downcast y) i128 md)
@@ -86,7 +90,11 @@ prim_wideningInt64 op (IR (OP_Int64 x)) (IR (OP_Int64 y)) = do
   (d,e) <- unpackInt128 c
   return $ A.pair (IR (upcastInt64 d)) (IR (upcastWord64 e))
 
-prim_wideningWord64 :: (Operand -> Operand -> InstructionMetadata -> Instruction) -> IR Word64 -> IR Word64 -> CodeGen (IR (Word64, Word64))
+prim_wideningWord64
+    :: (Operand -> Operand -> InstructionMetadata -> Instruction)
+    -> IR Word64
+    -> IR Word64
+    -> CodeGen arch (IR (Word64, Word64))
 prim_wideningWord64 op (IR (OP_Word64 x)) (IR (OP_Word64 y)) = do
   a     <- instr i128 (ZExt (downcast x) i128 md)
   b     <- instr i128 (ZExt (downcast y) i128 md)
@@ -129,7 +137,7 @@ remInt128# = IRFun1 $ A.uncurry (prim_binaryInt128 SRem)
 quotRemInt128# :: IRFun1 arch () ((Int128, Int128) -> (Int128,Int128))
 quotRemInt128# = IRFun1 $ A.uncurry quotRem'
   where
-    quotRem' :: IR Int128 -> IR Int128 -> CodeGen (IR (Int128, Int128))
+    quotRem' :: IR Int128 -> IR Int128 -> CodeGen arch (IR (Int128, Int128))
     quotRem' (IR xx) (IR yy)
       | OP_Pair (OP_Pair OP_Unit (OP_Int64 xh)) (OP_Word64 xl) <- xx
       , OP_Pair (OP_Pair OP_Unit (OP_Int64 yh)) (OP_Word64 yl) <- yy
@@ -153,7 +161,7 @@ remWord128# = IRFun1 $ A.uncurry (prim_binaryWord128 URem)
 quotRemWord128# :: IRFun1 arch () ((Word128, Word128) -> (Word128,Word128))
 quotRemWord128# = IRFun1 $ A.uncurry quotRem'
   where
-    quotRem' :: IR Word128 -> IR Word128 -> CodeGen (IR (Word128, Word128))
+    quotRem' :: IR Word128 -> IR Word128 -> CodeGen arch (IR (Word128, Word128))
     quotRem' (IR xx) (IR yy)
       | OP_Pair (OP_Pair OP_Unit (OP_Word64 xh)) (OP_Word64 xl) <- xx
       , OP_Pair (OP_Pair OP_Unit (OP_Word64 yh)) (OP_Word64 yl) <- yy
@@ -170,7 +178,11 @@ quotRemWord128# = IRFun1 $ A.uncurry quotRem'
 
 -- Helpers
 
-prim_binaryWord128 :: (Operand -> Operand -> InstructionMetadata -> Instruction) -> IR Word128 -> IR Word128 -> CodeGen (IR Word128)
+prim_binaryWord128
+    :: (Operand -> Operand -> InstructionMetadata -> Instruction)
+    -> IR Word128
+    -> IR Word128
+    -> CodeGen arch (IR Word128)
 prim_binaryWord128 op xx yy
   | IR (OP_Pair (OP_Pair OP_Unit (OP_Word64 xh)) (OP_Word64 xl)) <- xx
   , IR (OP_Pair (OP_Pair OP_Unit (OP_Word64 yh)) (OP_Word64 yl)) <- yy
@@ -181,7 +193,11 @@ prim_binaryWord128 op xx yy
       (hi,lo) <- unpackWord128 r
       return $ upcastWord128 hi lo
 
-prim_binaryInt128 :: (Operand -> Operand -> InstructionMetadata -> Instruction) -> IR Int128 -> IR Int128 -> CodeGen (IR Int128)
+prim_binaryInt128
+    :: (Operand -> Operand -> InstructionMetadata -> Instruction)
+    -> IR Int128
+    -> IR Int128
+    -> CodeGen arch (IR Int128)
 prim_binaryInt128 op xx yy
   | IR (OP_Pair (OP_Pair OP_Unit (OP_Int64 xh)) (OP_Word64 xl)) <- xx
   , IR (OP_Pair (OP_Pair OP_Unit (OP_Int64 yh)) (OP_Word64 yl)) <- yy
@@ -205,16 +221,16 @@ nuw = False
 md :: InstructionMetadata
 md = []
 
-fresh :: CodeGen Name
+fresh :: CodeGen arch Name
 fresh = downcast <$> freshName
 
-instr :: Type -> Instruction -> CodeGen Operand
+instr :: Type -> Instruction -> CodeGen arch Operand
 instr ty ins = do
   name <- fresh
   instr_ (name := ins)
   return (LocalReference ty name)
 
-packInt128 :: Operand -> Operand -> CodeGen Operand
+packInt128 :: Operand -> Operand -> CodeGen arch Operand
 packInt128 hi lo = do
   a <- instr i128 (SExt hi i128 md)
   b <- instr i128 (Shl  nsw nuw a (ConstantOperand (Int 128 64)) md)
@@ -222,7 +238,7 @@ packInt128 hi lo = do
   d <- instr i128 (Or b c md)
   return d
 
-packWord128 :: Operand -> Operand -> CodeGen Operand
+packWord128 :: Operand -> Operand -> CodeGen arch Operand
 packWord128 hi lo = do
   a <- instr i128 (ZExt hi i128 md)
   b <- instr i128 (Shl  nsw nuw a (ConstantOperand (Int 128 64)) md)
@@ -230,14 +246,14 @@ packWord128 hi lo = do
   d <- instr i128 (Or b c md)
   return d
 
-unpackInt128 :: Operand -> CodeGen (Operand,Operand)
+unpackInt128 :: Operand -> CodeGen arch (Operand,Operand)
 unpackInt128 x = do
   a <- instr i128 (AShr False x (ConstantOperand (Int 128 64)) md)
   b <- instr i64 (Trunc a i64 md)
   c <- instr i64 (Trunc x i64 md)
   return (b,c)
 
-unpackWord128 :: Operand -> CodeGen (Operand,Operand)
+unpackWord128 :: Operand -> CodeGen arch (Operand,Operand)
 unpackWord128 x = do
   a <- instr i128 (LShr False x (ConstantOperand (Int 128 64)) md)
   b <- instr i64 (Trunc a i64 md)

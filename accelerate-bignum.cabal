@@ -51,15 +51,15 @@ library
 
   build-depends:
           base                          >= 4.8 && < 4.12
-        , accelerate                    >= 1.0
+        , accelerate                    >= 1.3
         , ghc-prim
         , template-haskell
 
   if flag(llvm-cpu)
     cpp-options:        -DACCELERATE_LLVM_NATIVE_BACKEND
     build-depends:
-          accelerate-llvm               >= 1.0
-        , accelerate-llvm-native        >= 1.0
+          accelerate-llvm               >= 1.3
+        , accelerate-llvm-native        >= 1.3
         , llvm-hs-pure                  >= 3.9
     --
     other-modules:
@@ -68,8 +68,8 @@ library
   if flag(llvm-ptx)
     cpp-options:        -DACCELERATE_LLVM_PTX_BACKEND
     build-depends:
-          accelerate-llvm               >= 1.0
-        , accelerate-llvm-ptx           >= 1.0
+          accelerate-llvm               >= 1.3
+        , accelerate-llvm-ptx           >= 1.3
         , llvm-hs-pure                  >= 3.9
     --
     other-modules:
@@ -190,7 +190,7 @@ benchmark accelerate-bignum-bench
           base                          >= 4.8 && < 4.12
         , accelerate
         , accelerate-bignum
-        , accelerate-io                 >= 0.16
+        , accelerate-io                 >= 1.0
         , criterion                     >= 1.0
         , mwc-random                    >= 0.13
         , vector                        >= 0.11
