@@ -8,6 +8,7 @@
 {-# LANGUAGE RebindableSyntax      #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE UndecidableInstances  #-}
@@ -102,8 +103,8 @@ instance ( Num a
   fromInteger = constant . P.fromInteger
 
   {-# SPECIALIZE (+) :: Exp Word128 -> Exp Word128 -> Exp Word128 #-}
-  (+) | Just Refl <- matchWord128 (undefined::BigWord a b) = CPU.addWord128# $ PTX.addWord128# add
-      | otherwise                                          = add
+  (+) | Just Refl <- matchWord128 @(BigWord a b) = CPU.addWord128# $ PTX.addWord128# add
+      | otherwise                                = add
     where
       add :: Exp (BigWord a b) -> Exp (BigWord a b) -> Exp (BigWord a b)
       add (unlift -> W2 xh xl) (unlift -> W2 yh yl) = mkW2 hi lo
@@ -112,12 +113,12 @@ instance ( Num a
           hi = xh + yh + if lo < xl then 1 else 0
 
   {-# SPECIALIZE (-) :: Exp Word128 -> Exp Word128 -> Exp Word128 #-}
-  (-) | Just Refl <- matchWord128 (undefined::BigWord a b) = CPU.subWord128# $ PTX.subWord128# (\x y -> x + negate y)
-      | otherwise                                          = \x y -> x + negate y
+  (-) | Just Refl <- matchWord128 @(BigWord a b) = CPU.subWord128# $ PTX.subWord128# (\x y -> x + negate y)
+      | otherwise                                = \x y -> x + negate y
 
   {-# SPECIALIZE (*) :: Exp Word128 -> Exp Word128 -> Exp Word128 #-}
-  (*) | Just Refl <- matchWord128 (undefined::BigWord a b) = CPU.mulWord128# $ PTX.mulWord128# mul
-      | otherwise                                          = mul
+  (*) | Just Refl <- matchWord128 @(BigWord a b) = CPU.mulWord128# $ PTX.mulWord128# mul
+      | otherwise                                = mul
     where
       mul :: Exp (BigWord a b) -> Exp (BigWord a b) -> Exp (BigWord a b)
       mul (unlift -> W2 xh xl) (unlift -> W2 yh yl) = mkW2 hi lo
@@ -146,20 +147,20 @@ instance ( Integral a, FiniteBits a, FromIntegral a b, Num2 (Exp a), Bounded a
   divMod = quotRem
 
   {-# SPECIALISE quot :: Exp Word128 -> Exp Word128 -> Exp Word128 #-}
-  quot | Just Refl <- matchWord128 (undefined::BigWord a b) = CPU.quotWord128# $ PTX.quotWord128# go
-       | otherwise                                          = go
+  quot | Just Refl <- matchWord128 @(BigWord a b) = CPU.quotWord128# $ PTX.quotWord128# go
+       | otherwise                                = go
     where
       go x y = P.fst (quotRem x y)
 
   {-# SPECIALISE rem :: Exp Word128 -> Exp Word128 -> Exp Word128 #-}
-  rem | Just Refl <- matchWord128 (undefined::BigWord a b) = CPU.remWord128# $ PTX.remWord128# go
-      | otherwise                                          = go
+  rem | Just Refl <- matchWord128 @(BigWord a b) = CPU.remWord128# $ PTX.remWord128# go
+      | otherwise                                = go
     where
       go x y = P.snd (quotRem x y)
 
   {-# SPECIALISE quotRem :: Exp Word128 -> Exp Word128 -> (Exp Word128, Exp Word128) #-}
-  quotRem | Just Refl <- matchWord128 (undefined::BigWord a b) = untup2 $$ CPU.quotRemWord128# $ PTX.quotRemWord128# quotRem'
-          | otherwise                                          = untup2 $$ quotRem'
+  quotRem | Just Refl <- matchWord128 @(BigWord a b) = untup2 $$ CPU.quotRemWord128# $ PTX.quotRemWord128# quotRem'
+          | otherwise                                = untup2 $$ quotRem'
     where
       quotRem' :: Exp (BigWord a b) -> Exp (BigWord a b) -> Exp (BigWord a b, BigWord a b)
       quotRem' x@(unlift -> W2 xh xl) y@(unlift -> W2 yh yl)
@@ -504,8 +505,8 @@ instance ( Num a, Ord a
   fromInteger = constant . fromInteger
 
   {-# SPECIALIZE (+) :: Exp Int128 -> Exp Int128 -> Exp Int128 #-}
-  (+) | Just Refl <- matchInt128 (undefined::BigInt a b) = CPU.addInt128# $ PTX.addInt128# add
-      | otherwise                                        = add
+  (+) | Just Refl <- matchInt128 @(BigInt a b) = CPU.addInt128# $ PTX.addInt128# add
+      | otherwise                              = add
     where
       add :: Exp (BigInt a b) -> Exp (BigInt a b) -> Exp (BigInt a b)
       add (unlift -> I2 xh xl) (unlift -> I2 yh yl) = mkI2 hi lo
@@ -514,12 +515,12 @@ instance ( Num a, Ord a
           hi = xh + yh + if lo < xl then 1 else 0
 
   {-# SPECIALIZE (-) :: Exp Int128 -> Exp Int128 -> Exp Int128 #-}
-  (-) | Just Refl <- matchInt128 (undefined::BigInt a b) = CPU.subInt128# $ PTX.subInt128# (\x y -> x + negate y)
-      | otherwise                                        = \x y -> x + negate y
+  (-) | Just Refl <- matchInt128 @(BigInt a b) = CPU.subInt128# $ PTX.subInt128# (\x y -> x + negate y)
+      | otherwise                              = \x y -> x + negate y
 
   {-# SPECIALIZE (*) :: Exp Int128 -> Exp Int128 -> Exp Int128 #-}
-  (*) | Just Refl <- matchInt128 (undefined::BigInt a b) = CPU.mulInt128# $ PTX.mulInt128# mul
-      | otherwise                                        = mul
+  (*) | Just Refl <- matchInt128 @(BigInt a b) = CPU.mulInt128# $ PTX.mulInt128# mul
+      | otherwise                              = mul
     where
       mul :: Exp (BigInt a b) -> Exp (BigInt a b) -> Exp (BigInt a b)
       mul x y = signed (unsigned x * unsigned y)
@@ -541,20 +542,20 @@ instance ( Integral a
   toInteger = error "Prelude.toInteger is not supported for Accelerate types"
 
   {-# SPECIALIZE quot :: Exp Int128 -> Exp Int128 -> Exp Int128 #-}
-  quot | Just Refl <- matchInt128 (undefined::BigInt a b) = CPU.quotInt128# $ PTX.quotInt128# go
-       | otherwise                                        = go
+  quot | Just Refl <- matchInt128 @(BigInt a b) = CPU.quotInt128# $ PTX.quotInt128# go
+       | otherwise                              = go
     where
       go x y = P.fst (quotRem x y)
 
   {-# SPECIALIZE rem :: Exp Int128 -> Exp Int128 -> Exp Int128 #-}
-  rem | Just Refl <- matchInt128 (undefined::BigInt a b) = CPU.remInt128# $ PTX.remInt128# go
-      | otherwise                                        = go
+  rem | Just Refl <- matchInt128 @(BigInt a b) = CPU.remInt128# $ PTX.remInt128# go
+      | otherwise                              = go
     where
       go x y = P.snd (quotRem x y)
 
   {-# SPECIALISE quotRem :: Exp Int128 -> Exp Int128 -> (Exp Int128, Exp Int128) #-}
-  quotRem | Just Refl <- matchInt128 (undefined::BigInt a b) = untup2 $$ CPU.quotRemInt128# $ PTX.quotRemInt128# quotRem'
-          | otherwise                                        = untup2 $$ quotRem'
+  quotRem | Just Refl <- matchInt128 @(BigInt a b) = untup2 $$ CPU.quotRemInt128# $ PTX.quotRemInt128# quotRem'
+          | otherwise                              = untup2 $$ quotRem'
     where
       quotRem' x y =
         if x < 0
@@ -858,18 +859,18 @@ defaultUnwrapped op x y = (hi, lo)
 -- Utilities
 -- ---------
 
-matchInt128 :: Elt (BigInt a b) => BigInt a b -> Maybe (BigInt a b :~: Int128)
-matchInt128 t
-  | Just Refl <- matchTupleType (eltType t) (eltType (undefined::Int128))
+matchInt128 :: forall t. Elt t => Maybe (t :~: Int128)
+matchInt128
+  | Just Refl <- matchTupleType (eltType @t) (eltType @Int128)
   = gcast Refl
-matchInt128 _
+  | otherwise
   = Nothing
 
-matchWord128 :: Elt (BigWord a b) => BigWord a b -> Maybe (BigWord a b :~: Word128)
-matchWord128 t
-  | Just Refl <- matchTupleType (eltType t) (eltType (undefined::Word128))
+matchWord128 :: forall t. Elt t => Maybe (t :~: Word128)
+matchWord128
+  | Just Refl <- matchTupleType (eltType @t) (eltType @Word128)
   = gcast Refl
-matchWord128 _
+  | otherwise
   = Nothing
 
 

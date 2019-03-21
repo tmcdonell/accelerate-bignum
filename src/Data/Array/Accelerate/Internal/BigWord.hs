@@ -1,4 +1,5 @@
 {-# LANGUAGE ConstraintKinds      #-}
+{-# LANGUAGE DeriveGeneric        #-}
 {-# LANGUAGE FlexibleContexts     #-}
 {-# LANGUAGE ScopedTypeVariables  #-}
 {-# LANGUAGE TypeFamilies         #-}
@@ -42,6 +43,7 @@ module Data.Array.Accelerate.Internal.BigWord (
 import Data.Bits
 import Data.Ratio
 import Data.Word
+import GHC.Generics
 
 import {-# SOURCE #-} Data.Array.Accelerate.Internal.BigInt
 import Data.Array.Accelerate.Internal.Num2
@@ -59,7 +61,7 @@ type Word512 = BigWord Word256 Word256
 -- | Large word of fixed size represented as separate high and low (unsigned)
 -- words.
 --
-data BigWord    hi lo = W2 !hi !lo
+data BigWord    hi lo = W2 !hi !lo deriving Generic
 type BigWordCtx hi lo = (hi ~ Unsigned hi, lo ~ Unsigned lo)
 
 

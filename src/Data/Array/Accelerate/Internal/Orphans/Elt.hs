@@ -30,20 +30,8 @@ import Data.Array.Accelerate.Product
 import Data.Array.Accelerate.Smart
 
 
-type instance EltRepr (BigInt  a b) = EltRepr (a,b)
-type instance EltRepr (BigWord a b) = EltRepr (a,b)
-
-
-instance (Elt a, Elt b, Show (BigWord a b)) => Elt (BigWord a b) where
-  eltType _        = eltType (undefined :: (a,b))
-  toElt w          = let (a,b) = toElt w in W2 a b
-  fromElt (W2 a b) = fromElt (a,b)
-
-instance (cst a, cst b) => IsProduct cst (BigWord a b) where
-  type ProdRepr (BigWord a b) = ProdRepr (a,b)
-  fromProd cst (W2 a b) = fromProd cst (a,b)
-  toProd cst w          = let (a,b) = toProd cst w in W2 a b
-  prod cst _            = prod cst (undefined :: (a,b))
+instance (Elt a, Elt b, Show (BigWord a b)) => Elt (BigWord a b)
+instance (Elt a, Elt b) => IsProduct Elt (BigWord a b)
 
 instance (Lift Exp a, Lift Exp b, Elt (Plain a), Elt (Plain b), Show (BigWord (Plain a) (Plain b)))
     => Lift Exp (BigWord a b) where
@@ -58,16 +46,8 @@ instance (Elt a, Elt b, Show (BigWord a b)) => Unlift Exp (BigWord (Exp a) (Exp 
     W2 a b
 
 
-instance (Elt a, Elt b, Show (BigInt a b)) => Elt (BigInt a b) where
-  eltType _        = eltType (undefined :: (a,b))
-  toElt w          = let (a,b) = toElt w in I2 a b
-  fromElt (I2 a b) = fromElt (a,b)
-
-instance (cst a, cst b) => IsProduct cst (BigInt a b) where
-  type ProdRepr (BigInt a b) = ProdRepr (a,b)
-  fromProd cst (I2 a b) = fromProd cst (a,b)
-  toProd cst w          = let (a,b) = toProd cst w in I2 a b
-  prod cst _            = prod cst (undefined :: (a,b))
+instance (Elt a, Elt b, Show (BigInt a b)) => Elt (BigInt a b)
+instance (Elt a, Elt b) => IsProduct Elt (BigInt a b)
 
 instance (Lift Exp a, Lift Exp b, Elt (Plain a), Elt (Plain b), Show (BigInt (Plain a) (Plain b)))
     => Lift Exp (BigInt a b) where
