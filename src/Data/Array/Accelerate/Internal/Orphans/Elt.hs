@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PatternSynonyms       #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE UndecidableInstances  #-}
@@ -18,8 +19,12 @@
 -- Orphan Elt instances for BigWord and BigInt
 --
 
-module Data.Array.Accelerate.Internal.Orphans.Elt ()
-  where
+module Data.Array.Accelerate.Internal.Orphans.Elt (
+
+  pattern W2_,
+  pattern I2_,
+
+) where
 
 import Data.Array.Accelerate.Internal.BigInt
 import Data.Array.Accelerate.Internal.BigWord
@@ -32,6 +37,10 @@ import Data.Array.Accelerate.Smart
 
 instance (Elt a, Elt b, Show (BigWord a b)) => Elt (BigWord a b)
 instance (Elt a, Elt b) => IsProduct Elt (BigWord a b)
+
+pattern W2_ :: (Elt a, Elt b, Show (BigWord a b)) => Exp a -> Exp b -> Exp (BigWord a b)
+pattern W2_ a b = Pattern (a,b)
+{-# COMPLETE W2_ #-}
 
 instance (Lift Exp a, Lift Exp b, Elt (Plain a), Elt (Plain b), Show (BigWord (Plain a) (Plain b)))
     => Lift Exp (BigWord a b) where
@@ -48,6 +57,10 @@ instance (Elt a, Elt b, Show (BigWord a b)) => Unlift Exp (BigWord (Exp a) (Exp 
 
 instance (Elt a, Elt b, Show (BigInt a b)) => Elt (BigInt a b)
 instance (Elt a, Elt b) => IsProduct Elt (BigInt a b)
+
+pattern I2_ :: (Elt a, Elt b, Show (BigInt a b)) => Exp a -> Exp b -> Exp (BigInt a b)
+pattern I2_ a b = Pattern (a, b)
+{-# COMPLETE I2_ #-}
 
 instance (Lift Exp a, Lift Exp b, Elt (Plain a), Elt (Plain b), Show (BigInt (Plain a) (Plain b)))
     => Lift Exp (BigInt a b) where

@@ -34,7 +34,7 @@ module Data.Array.Accelerate.Internal.Orphans.Base ()
 import Data.Array.Accelerate.Internal.BigInt
 import Data.Array.Accelerate.Internal.BigWord
 import Data.Array.Accelerate.Internal.Num2
-import Data.Array.Accelerate.Internal.Orphans.Elt                   ()
+import Data.Array.Accelerate.Internal.Orphans.Elt
 
 import qualified Data.Array.Accelerate.Internal.LLVM.Native         as CPU
 import qualified Data.Array.Accelerate.Internal.LLVM.PTX            as PTX
@@ -65,25 +65,22 @@ type BigWordCtx hi lo =
     , Exp lo ~ Unsigned (Exp lo)
     )
 
-mkW2 :: (Elt a, Elt b, Elt (BigWord a b)) => Exp a -> Exp b -> Exp (BigWord a b)
-mkW2 a b = lift (W2 a b)
-
 
 instance (Bounded a, Bounded b, Elt (BigWord a b)) => P.Bounded (Exp (BigWord a b)) where
-  minBound = mkW2 minBound minBound
-  maxBound = mkW2 maxBound maxBound
+  minBound = W2_ minBound minBound
+  maxBound = W2_ maxBound maxBound
 
 
 instance (Eq a, Eq b, Elt (BigWord a b)) => Eq (BigWord a b) where
-  (unlift -> W2 xh xl) == (unlift -> W2 yh yl) = xh == yh && xl == yl
-  (unlift -> W2 xh xl) /= (unlift -> W2 yh yl) = xh /= yh || xl /= yl
+  W2_ xh xl == W2_ yh yl = xh == yh && xl == yl
+  W2_ xh xl /= W2_ yh yl = xh /= yh || xl /= yl
 
 
 instance (Ord a, Ord b, Elt (BigWord a b)) => Ord (BigWord a b) where
-  (unlift -> W2 xh xl) <  (unlift -> W2 yh yl) = xh == yh ? ( xl < yl,  xh < yh )
-  (unlift -> W2 xh xl) >  (unlift -> W2 yh yl) = xh == yh ? ( xl > yl,  xh > yh )
-  (unlift -> W2 xh xl) <= (unlift -> W2 yh yl) = xh == yh ? ( xl <= yl, xh <= yh )
-  (unlift -> W2 xh xl) >= (unlift -> W2 yh yl) = xh == yh ? ( xl >= yl, xh >= yh )
+  W2_ xh xl <  W2_ yh yl = xh == yh ? ( xl < yl,  xh < yh )
+  W2_ xh xl >  W2_ yh yl = xh == yh ? ( xl > yl,  xh > yh )
+  W2_ xh xl <= W2_ yh yl = xh == yh ? ( xl <= yl, xh <= yh )
+  W2_ xh xl >= W2_ yh yl = xh == yh ? ( xl >= yl, xh >= yh )
 
 
 instance ( Num a
@@ -93,10 +90,10 @@ instance ( Num a
          , BigWordCtx a b
          )
     => P.Num (Exp (BigWord a b)) where
-  negate (unlift -> W2 hi lo) =
+  negate (W2_ hi lo) =
     if lo == 0
-      then mkW2 (negate hi) 0
-      else mkW2 (negate (hi+1)) (negate lo)
+      then W2_ (negate hi) 0
+      else W2_ (negate (hi+1)) (negate lo)
 
   abs         = id
   signum x    = x == 0 ? (0,1)
@@ -107,7 +104,7 @@ instance ( Num a
       | otherwise                                = add
     where
       add :: Exp (BigWord a b) -> Exp (BigWord a b) -> Exp (BigWord a b)
-      add (unlift -> W2 xh xl) (unlift -> W2 yh yl) = mkW2 hi lo
+      add (W2_ xh xl) (W2_ yh yl) = W2_ hi lo
         where
           lo = xl + yl
           hi = xh + yh + if lo < xl then 1 else 0
@@ -121,7 +118,7 @@ instance ( Num a
       | otherwise                                = mul
     where
       mul :: Exp (BigWord a b) -> Exp (BigWord a b) -> Exp (BigWord a b)
-      mul (unlift -> W2 xh xl) (unlift -> W2 yh yl) = mkW2 hi lo
+      mul (W2_ xh xl) (W2_ yh yl) = W2_ hi lo
         where
           hi      = xh * fromIntegral yl + yh * fromIntegral xl + fromIntegral c
           (c,lo)  = mulWithCarry xl yl
@@ -163,70 +160,69 @@ instance ( Integral a, FiniteBits a, FromIntegral a b, Num2 (Exp a), Bounded a
           | otherwise                                = untup2 $$ quotRem'
     where
       quotRem' :: Exp (BigWord a b) -> Exp (BigWord a b) -> Exp (BigWord a b, BigWord a b)
-      quotRem' x@(unlift -> W2 xh xl) y@(unlift -> W2 yh yl)
+      quotRem' x@(W2_ xh xl) y@(W2_ yh yl)
         = xh <  yh ? ( tup2 (0, x)
         , xh == yh ? ( xl <  yl ? ( tup2 (0, x)
                      , xl == yl ? ( tup2 (1, 0)
                      , {-xl > yl -} yh == 0 ? ( let (t2,t1) = quotRem xl yl
-                                                in  lift (mkW2 0 t2, mkW2 0 t1)
-                                              , tup2 (1, mkW2 0 (xl-yl))
+                                                in  lift (W2_ 0 t2, W2_ 0 t1)
+                                              , tup2 (1, W2_ 0 (xl-yl))
                                               )
                      ))
         ,{- xh > yh -} yl == 0 ? ( let (t2,t1) = quotRem xh yh
-                                   in  lift (mkW2 0 (fromIntegral t2), W2 t1 xl)
+                                   in  lift (W2_ 0 (fromIntegral t2), W2 t1 xl)
                      , yh == 0 && yl == maxBound
                                ? ( let z       = fromIntegral xh
                                        (t2,t1) = addWithCarry z xl
                                    in
                                    t2 == 0 ?
                                      ( t1 == maxBound ?
-                                       ( tup2 ((mkW2 0 z) + 1, 0)
-                                       , tup2 (mkW2 0 z, mkW2 0 t1)
+                                       ( tup2 ((W2_ 0 z) + 1, 0)
+                                       , tup2 (W2_ 0 z, W2_ 0 t1)
                                        )
                                      , t1 == maxBound ?
-                                       ( tup2 ((mkW2 0 z) + 2, 1)
+                                       ( tup2 ((W2_ 0 z) + 2, 1)
                                        , t1 == xor maxBound 1 ?
-                                           ( tup2 ((mkW2 0 z) + 2, 0)
-                                           , tup2 ((mkW2 0 z) + 1, mkW2 0 (t1+1))
+                                           ( tup2 ((W2_ 0 z) + 2, 0)
+                                           , tup2 ((W2_ 0 z) + 1, W2_ 0 (t1+1))
                                            )
                                        )
                                      )
                      , yh == 0 ? ( let (t2,t1) = untup2 (div1 xh xl yl)
-                                   in  tup2 (t2, mkW2 0 t1)
+                                   in  tup2 (t2, W2_ 0 t1)
                      , {- otherwise -}
-                       let t1         = countLeadingZeros xh
-                           t2         = countLeadingZeros yh
-                           z          = shiftR xh (finiteBitSize (undefined::Exp a) - t2)
-                           u          = shiftL x t2
-                           v          = shiftL y t2
-                           W2 hhh hll = unlift u  :: BigWord (Exp a) (Exp b)
-                           W2 lhh lll = unlift v  :: BigWord (Exp a) (Exp b)
-                           -- -- z hhh hll / lhh lll
-                           (q1, r1)   = div2 z hhh lhh
-                           (t4, t3)   = mulWithCarry (fromIntegral q1) lll
-                           t5         = mkW2 (fromIntegral t4) t3
-                           t6         = mkW2 r1 hll
-                           (t8, t7)   = addWithCarry t6 v
-                           (t10, t9)  = addWithCarry t7 v
-                           loWord w   = let W2 _ l = unlift w :: BigWord (Exp a) (Exp b)
-                                        in  l
-                           qr2        = t5 > t6 ?
-                                          ( loWord t8 == 0 ?
-                                            ( t7 >= t5 ?
-                                              ( tup2 (q1-1, t7-t5)
-                                              , loWord t10 == 0 ?
-                                                ( tup2 (q1-2, t9-t5)
-                                                , tup2 (q1-2, (maxBound-t5) + t9 + 1)
+                       let t1               = countLeadingZeros xh
+                           t2               = countLeadingZeros yh
+                           z                = shiftR xh (finiteBitSize (undefined::Exp a) - t2)
+                           u                = shiftL x t2
+                           v                = shiftL y t2
+                           W2_ hhh hll      = u
+                           W2_ lhh lll      = v
+                           -- z hhh hll / lhh lll
+                           (q1, r1)         = div2 z hhh lhh
+                           (t4, t3)         = mulWithCarry (fromIntegral q1) lll
+                           t5               = W2_ (fromIntegral t4) t3
+                           t6               = W2_ r1 hll
+                           (t8, t7)         = addWithCarry t6 v
+                           (t10, t9)        = addWithCarry t7 v
+                           loWord (W2_ _ l) = l :: Exp b
+                           qr2              = t5 > t6 ?
+                                                ( loWord t8 == 0 ?
+                                                  ( t7 >= t5 ?
+                                                    ( tup2 (q1-1, t7-t5)
+                                                    , loWord t10 == 0 ?
+                                                      ( tup2 (q1-2, t9-t5)
+                                                      , tup2 (q1-2, (maxBound-t5) + t9 + 1)
+                                                      )
+                                                    )
+                                                  , tup2 (q1-1, (maxBound-t5) + t7 + 1)
+                                                  )
+                                                , tup2 (q1, t6-t5)
                                                 )
-                                              )
-                                            , tup2 (q1-1, (maxBound-t5) + t7 + 1)
-                                            )
-                                          , tup2 (q1, t6-t5)
-                                          )
-                           (q2,r2)    = unlift qr2
+                           (q2,r2)          = unlift qr2
                        in
                        t1 == t2 ? ( tup2 (1, x-y)
-                                  , lift (mkW2 0 (fromIntegral q2), shiftR r2 t2)
+                                  , lift (W2_ 0 (fromIntegral q2), shiftR r2 t2)
                                   )
                      )))
         ))
@@ -248,7 +244,7 @@ instance ( Integral a, FiniteBits a, FromIntegral a b, Num2 (Exp a), Bounded a
               (t6, _t5) = addWithCarry t3 l
               z         = t4 + t6
 
-          body h l c = lift (fromIntegral z, t5, c + (mkW2 (fromIntegral t8) t7))
+          body h l c = lift (fromIntegral z, t5, c + (W2_ (fromIntegral t8) t7))
             where
               h1        = fromIntegral h
               (t4, t3)  = mulWithCarry h1 (t1 + 1)
@@ -256,7 +252,7 @@ instance ( Integral a, FiniteBits a, FromIntegral a b, Num2 (Exp a), Bounded a
               z         = t4 + t6
               (t8, t7)  = mulWithCarry h1 t2
 
-          after h l c = lift (c + mkW2 (fromIntegral t8) t7 + mkW2 0 t10, t9)
+          after h l c = lift (c + W2_ (fromIntegral t8) t7 + W2_ 0 t10, t9)
             where
               h1        = fromIntegral h
               (_t4, t3) = mulWithCarry h1 (t1 + 1)
@@ -316,19 +312,19 @@ instance ( Integral a, FiniteBits a, FromIntegral a b, Num2 (Exp a)
   type Signed   (Exp (BigWord a b)) = Exp (BigInt (Signed a) b)
   type Unsigned (Exp (BigWord a b)) = Exp (BigWord a b)
   --
-  signed (unlift -> W2 (hi::Exp a) lo) = mkI2 (signed hi) lo
+  signed (W2_ hi lo) = I2_ (signed hi) lo
   unsigned = id
   --
-  addWithCarry (unlift -> W2 xh xl) (unlift -> W2 yh yl) = (mkW2 0 w, mkW2 v u)
+  addWithCarry (W2_ xh xl) (W2_ yh yl) = (W2_ 0 w, W2_ v u)
     where
       (t1, u)   = addWithCarry xl yl
       (t3, t2)  = addWithCarry xh (fromIntegral t1)
       (t4, v)   = addWithCarry t2 yh
       w         = fromIntegral (t3 + t4)
 
-  mulWithCarry (unlift -> W2 xh xl) (unlift -> W2 yh yl) =
-      ( mkW2 (hhh + fromIntegral (shiftR t9 y) + shiftL x z) (shiftL t9 z .|. shiftR t3 y)
-      , mkW2 (fromIntegral t3) lll)
+  mulWithCarry (W2_ xh xl) (W2_ yh yl) =
+      ( W2_ (hhh + fromIntegral (shiftR t9 y) + shiftL x z) (shiftL t9 z .|. shiftR t3 y)
+      , W2_ (fromIntegral t3) lll)
     where
       (llh, lll) = mulWithCarry xl yl
       (hlh, hll) = mulWithCarry (fromIntegral xh) yl
@@ -352,19 +348,19 @@ instance ( Integral a, FiniteBits a, FromIntegral a b
 
   isSigned _ = constant False
 
-  (unlift -> W2 xh xl) .&.   (unlift -> W2 yh yl) = mkW2 (xh .&. yh) (xl .&. yl)
-  (unlift -> W2 xh xl) .|.   (unlift -> W2 yh yl) = mkW2 (xh .|. yh) (xl .|. yl)
-  (unlift -> W2 xh xl) `xor` (unlift -> W2 yh yl) = mkW2 (xh `xor` yh) (xl `xor` yl)
-  complement (unlift -> W2 hi lo) = mkW2 (complement hi) (complement lo)
+  W2_ xh xl .&.   W2_ yh yl = W2_ (xh .&. yh) (xl .&. yl)
+  W2_ xh xl .|.   W2_ yh yl = W2_ (xh .|. yh) (xl .|. yl)
+  W2_ xh xl `xor` W2_ yh yl = W2_ (xh `xor` yh) (xl `xor` yl)
+  complement (W2_ hi lo)    = W2_ (complement hi) (complement lo)
 
-  shiftL (unlift -> W2 hi lo) x =
+  shiftL (W2_ hi lo) x =
     if y > 0
-      then mkW2 (shiftL hi x .|. fromIntegral (shiftR lo y)) (shiftL lo x)
-      else mkW2 (fromIntegral (shiftL lo (negate y))) (0::Exp b)
+      then W2_ (shiftL hi x .|. fromIntegral (shiftR lo y)) (shiftL lo x)
+      else W2_ (fromIntegral (shiftL lo (negate y))) (0::Exp b)
     where
       y = finiteBitSize (undefined::Exp b) - x
 
-  shiftR (unlift -> W2 hi lo) x = mkW2 hi' lo'
+  shiftR (W2_ hi lo) x = W2_ hi' lo'
     where
       hi' = shiftR hi x
       lo' = if y >= 0 then shiftL (fromIntegral hi) y .|. shiftR lo x
@@ -373,12 +369,12 @@ instance ( Integral a, FiniteBits a, FromIntegral a b
       y   = finiteBitSize (undefined::Exp b) - x
       z   = shiftR (fromIntegral hi) (negate y)
 
-  rotateL (unlift -> W2 hi lo) x =
+  rotateL (W2_ hi lo) x =
     if y >= 0
-      then mkW2 (fromIntegral (shiftL lo y) .|. shiftR hi z)
-                (shiftL (fromIntegral hi) (finiteBitSize (undefined::Exp b) - z) .|. shiftR lo z)
-      else mkW2 (fromIntegral (shiftR lo (negate y)) .|. shiftL hi x)
-                (shift (fromIntegral hi) (finiteBitSize (undefined::Exp b) - z) .|. shiftL lo x .|. shiftR lo z)
+      then W2_ (fromIntegral (shiftL lo y) .|. shiftR hi z)
+               (shiftL (fromIntegral hi) (finiteBitSize (undefined::Exp b) - z) .|. shiftR lo z)
+      else W2_ (fromIntegral (shiftR lo (negate y)) .|. shiftL hi x)
+               (shift (fromIntegral hi) (finiteBitSize (undefined::Exp b) - z) .|. shiftL lo x .|. shiftR lo z)
     where
       y = x - finiteBitSize (undefined::Exp b)
       z = finiteBitSize (undefined::Exp (BigWord a b)) - x
@@ -387,40 +383,40 @@ instance ( Integral a, FiniteBits a, FromIntegral a b
 
   bit n =
     if m >= 0
-      then mkW2 (bit m) 0
-      else mkW2 0 (bit n)
+      then W2_ (bit m) 0
+      else W2_ 0 (bit n)
     where
       m = n - finiteBitSize (undefined::Exp b)
 
-  testBit (unlift -> W2 hi lo) n =
+  testBit (W2_ hi lo) n =
     if m >= 0
       then testBit hi m
       else testBit lo n
     where
       m = n - finiteBitSize (undefined::Exp b)
 
-  setBit (unlift -> W2 hi lo) n =
+  setBit (W2_ hi lo) n =
     if m >= 0
-      then mkW2 (setBit hi m) lo
-      else mkW2 hi (setBit lo n)
+      then W2_ (setBit hi m) lo
+      else W2_ hi (setBit lo n)
     where
       m = n - finiteBitSize (undefined::Exp b)
 
-  clearBit (unlift -> W2 hi lo) n =
+  clearBit (W2_ hi lo) n =
     if m >= 0
-      then mkW2 (clearBit hi m) lo
-      else mkW2 hi (clearBit lo n)
+      then W2_ (clearBit hi m) lo
+      else W2_ hi (clearBit lo n)
     where
       m = n - finiteBitSize (undefined::Exp b)
 
-  complementBit (unlift -> W2 hi lo) n =
+  complementBit (W2_ hi lo) n =
     if m >= 0
-      then mkW2 (complementBit hi m) lo
-      else mkW2 hi (complementBit lo n)
+      then W2_ (complementBit hi m) lo
+      else W2_ hi (complementBit lo n)
     where
       m = n - finiteBitSize (undefined::Exp b)
 
-  popCount (unlift -> W2 hi lo) = popCount hi + popCount lo
+  popCount (W2_ hi lo) = popCount hi + popCount lo
 
 
 instance ( Integral a, FiniteBits a, FromIntegral a b
@@ -431,14 +427,14 @@ instance ( Integral a, FiniteBits a, FromIntegral a b
   finiteBitSize _ = finiteBitSize (undefined::Exp a)
                   + finiteBitSize (undefined::Exp b)
 
-  countLeadingZeros (unlift -> W2 hi lo) =
+  countLeadingZeros (W2_ hi lo) =
     hlz == wsib ? (wsib + llz, hlz)
     where
       hlz   = countLeadingZeros hi
       llz   = countLeadingZeros lo
       wsib  = finiteBitSize (undefined::Exp a)
 
-  countTrailingZeros (unlift -> W2 hi lo) =
+  countTrailingZeros (W2_ hi lo) =
     ltz == wsib ? (wsib + htz, ltz)
     where
       ltz   = countTrailingZeros lo
@@ -458,25 +454,22 @@ type BigIntCtx hi lo =
     , Exp lo ~ Unsigned (Exp lo)
     )
 
-mkI2 :: (Elt a, Elt b, Elt (BigInt a b)) => Exp a -> Exp b -> Exp (BigInt a b)
-mkI2 a b = lift (I2 a b)
-
 
 instance (Bounded a, Bounded b, Elt (BigInt a b)) => P.Bounded (Exp (BigInt a b)) where
-  minBound = mkI2 minBound minBound
-  maxBound = mkI2 maxBound maxBound
+  minBound = I2_ minBound minBound
+  maxBound = I2_ maxBound maxBound
 
 
 instance (Eq a, Eq b, Elt (BigInt a b)) => Eq (BigInt a b) where
-  (unlift -> I2 xh xl) == (unlift -> I2 yh yl) = xh == yh && xl == yl
-  (unlift -> I2 xh xl) /= (unlift -> I2 yh yl) = xh /= yh || xl /= yl
+  I2_ xh xl == I2_ yh yl = xh == yh && xl == yl
+  I2_ xh xl /= I2_ yh yl = xh /= yh || xl /= yl
 
 
 instance (Ord a, Ord b, Elt (BigInt a b)) => Ord (BigInt a b) where
-  (unlift -> I2 xh xl) <  (unlift -> I2 yh yl) = xh == yh ? ( xl < yl,  xh < yh )
-  (unlift -> I2 xh xl) >  (unlift -> I2 yh yl) = xh == yh ? ( xl > yl,  xh > yh )
-  (unlift -> I2 xh xl) <= (unlift -> I2 yh yl) = xh == yh ? ( xl <= yl, xh <= yh )
-  (unlift -> I2 xh xl) >= (unlift -> I2 yh yl) = xh == yh ? ( xl >= yl, xh >= yh )
+  I2_ xh xl <  I2_ yh yl = xh == yh ? ( xl < yl,  xh < yh )
+  I2_ xh xl >  I2_ yh yl = xh == yh ? ( xl > yl,  xh > yh )
+  I2_ xh xl <= I2_ yh yl = xh == yh ? ( xl <= yl, xh <= yh )
+  I2_ xh xl >= I2_ yh yl = xh == yh ? ( xl >= yl, xh >= yh )
 
 
 instance ( Num a, Ord a
@@ -488,15 +481,15 @@ instance ( Num a, Ord a
          , BigIntCtx a b
          )
     => P.Num (Exp (BigInt a b)) where
-  negate (unlift -> I2 hi lo) =
+  negate (I2_ hi lo) =
     if lo == 0
-      then mkI2 (negate hi) 0
-      else mkI2 (negate (hi+1)) (negate lo)
+      then I2_ (negate hi) 0
+      else I2_ (negate (hi+1)) (negate lo)
 
-  signum (unlift -> I2 hi lo :: BigInt (Exp a) (Exp b)) =
-    if hi <  0 then mkI2 (-1) maxBound else
+  signum (I2_ hi lo) =
+    if hi <  0 then I2_ (-1) maxBound else
     if hi == 0 then if lo == 0 then 0 else 1
-               else mkI2 0 1
+               else I2_ 0 1
 
   abs x =
     if x < 0 then negate x
@@ -509,7 +502,7 @@ instance ( Num a, Ord a
       | otherwise                              = add
     where
       add :: Exp (BigInt a b) -> Exp (BigInt a b) -> Exp (BigInt a b)
-      add (unlift -> I2 xh xl) (unlift -> I2 yh yl) = mkI2 hi lo
+      add (I2_ xh xl) (I2_ yh yl) = I2_ hi lo
         where
           lo = xl + yl
           hi = xh + yh + if lo < xl then 1 else 0
@@ -615,19 +608,19 @@ instance ( FiniteBits a, Integral a, FromIntegral a b, FromIntegral a (Signed b)
     => Bits (BigInt a b) where
   isSigned _ = constant True
 
-  (unlift -> I2 xh xl) .&. (unlift -> I2 yh yl)   = mkI2 (xh .&. yh) (xl .&. yl)
-  (unlift -> I2 xh xl) .|. (unlift -> I2 yh yl)   = mkI2 (xh .|. yh) (xl .|. yl)
-  (unlift -> I2 xh xl) `xor` (unlift -> I2 yh yl) = mkI2 (xh `xor` yh) (xl `xor` yl)
-  complement (unlift -> I2 hi lo)   = mkI2 (complement hi) (complement lo)
+  I2_ xh xl .&.   I2_ yh yl = I2_ (xh .&. yh) (xl .&. yl)
+  I2_ xh xl .|.   I2_ yh yl = I2_ (xh .|. yh) (xl .|. yl)
+  I2_ xh xl `xor` I2_ yh yl = I2_ (xh `xor` yh) (xl `xor` yl)
+  complement (I2_ hi lo)    = I2_ (complement hi) (complement lo)
 
-  shiftL (unlift -> I2 hi lo) x =
+  shiftL (I2_ hi lo) x =
     if y > 0
-      then mkI2 (shiftL hi x .|. fromIntegral (shiftR lo y)) (shiftL lo x)
-      else mkI2 (fromIntegral (shiftL lo (negate y))) 0
+      then I2_ (shiftL hi x .|. fromIntegral (shiftR lo y)) (shiftL lo x)
+      else I2_ (fromIntegral (shiftL lo (negate y))) 0
     where
       y = finiteBitSize (undefined::Exp b) - x
 
-  shiftR (unlift -> I2 hi lo) x = mkI2 hi' lo'
+  shiftR (I2_ hi lo) x = I2_ hi' lo'
     where
       hi' = shiftR hi x
       lo' = if y >= 0 then shiftL (fromIntegral hi) y .|. shiftR lo x
@@ -640,36 +633,36 @@ instance ( FiniteBits a, Integral a, FromIntegral a b, FromIntegral a (Signed b)
   rotateR x y = rotateL x (finiteBitSize (undefined::Exp (BigInt a b)) - y)
 
   bit n =
-    if m >= 0 then mkI2 (bit m) 0
-              else mkI2 0 (bit n)
+    if m >= 0 then I2_ (bit m) 0
+              else I2_ 0 (bit n)
     where
       m = n - finiteBitSize (undefined::Exp b)
 
-  testBit (unlift -> I2 hi lo) n =
+  testBit (I2_ hi lo) n =
     if m >= 0 then testBit hi m
               else testBit lo n
     where
       m = n - finiteBitSize (undefined::Exp b)
 
-  setBit (unlift -> I2 hi lo) n =
-    if m >= 0 then mkI2 (setBit hi m) lo
-              else mkI2 hi (setBit lo n)
+  setBit (I2_ hi lo) n =
+    if m >= 0 then I2_ (setBit hi m) lo
+              else I2_ hi (setBit lo n)
     where
       m = n - finiteBitSize (undefined::Exp b)
 
-  clearBit (unlift -> I2 hi lo) n =
-    if m >= 0 then mkI2 (clearBit hi m) lo
-              else mkI2 hi (clearBit lo n)
+  clearBit (I2_ hi lo) n =
+    if m >= 0 then I2_ (clearBit hi m) lo
+              else I2_ hi (clearBit lo n)
     where
       m = n - finiteBitSize (undefined::Exp b)
 
-  complementBit (unlift -> I2 hi lo) n =
-    if m >= 0 then mkI2 (complementBit hi m) lo
-              else mkI2 hi (complementBit lo n)
+  complementBit (I2_ hi lo) n =
+    if m >= 0 then I2_ (complementBit hi m) lo
+              else I2_ hi (complementBit lo n)
     where
       m = n - finiteBitSize (undefined::Exp b)
 
-  popCount (unlift -> I2 hi lo) = popCount hi + popCount lo
+  popCount (I2_ hi lo) = popCount hi + popCount lo
 
 
 instance ( FiniteBits a
@@ -705,7 +698,7 @@ instance ( Ord a
   type Unsigned (Exp (BigInt a b)) = Exp (BigWord (Unsigned a) b)
   --
   signed = id
-  unsigned (unlift -> I2 (hi::Exp a) lo) = mkW2 (unsigned hi) lo
+  unsigned (I2_ hi lo) = W2_ (unsigned hi) lo
   --
   addWithCarry x y = (c, r)
     where
@@ -714,7 +707,7 @@ instance ( Ord a
       (t3, r) = addWithCarry (unsigned x) (unsigned y)
       c       = signed (t1+t2+t3)
 
-  mulWithCarry x@(unlift -> I2 xh (_::Exp b)) y@(unlift -> I2 yh (_::Exp b)) = (hi,lo)
+  mulWithCarry x@(I2_ xh _) y@(I2_ yh _) = (hi,lo)
     where
       t1        = complement y + 1
       t2        = complement x + 1
@@ -923,52 +916,44 @@ $(runQ $ do
                 fromIntegral = id
 
               instance FromIntegral $(bigIntT big) $(bigWordT big) where
-                fromIntegral (unlift -> I2 hi lo) = mkW2 (fromIntegral hi) lo
+                fromIntegral (I2_ hi lo) = W2_ (fromIntegral hi) lo
 
               instance FromIntegral $(bigWordT big) $(bigIntT big) where
-                fromIntegral (unlift -> W2 hi lo) = mkI2 (fromIntegral hi) lo
+                fromIntegral (W2_ hi lo) = I2_ (fromIntegral hi) lo
             |]
 
         thFromIntegral2 :: (Int,Int) -> Int -> Q [Dec]
-        thFromIntegral2 big@(bigH,bigL) little =
+        thFromIntegral2 big little =
           [d|
               -- convert from primitive type to bignum type
               instance FromIntegral $(wordT little) $(bigWordT big) where
-                fromIntegral x = mkW2 0 (fromIntegral x)
+                fromIntegral x = W2_ 0 (fromIntegral x)
 
               instance FromIntegral $(wordT little) $(bigIntT big) where
-                fromIntegral x = mkI2 0 (fromIntegral x)
+                fromIntegral x = I2_ 0 (fromIntegral x)
 
               instance FromIntegral $(intT little) $(bigWordT big) where
                 fromIntegral x@(fromIntegral -> x') =
-                  if x < 0 then mkW2 maxBound x'
-                           else mkW2 0        x'
+                  if x < 0 then W2_ maxBound x'
+                           else W2_ 0        x'
 
               instance FromIntegral $(intT little) $(bigIntT big) where
                 fromIntegral x@(fromIntegral -> x') =
-                  if x < 0 then mkI2 (-1) x'
-                           else mkI2 0    x'
+                  if x < 0 then I2_ (-1) x'
+                           else I2_ 0    x'
 
               -- convert from bignum type to primitive type
               instance FromIntegral $(bigWordT big) $(wordT little) where
-                fromIntegral x =
-                  let W2 _ lo = unlift x :: BigWord (Exp $(wordT bigH)) (Exp $(wordT bigL))
-                  in  fromIntegral lo
+                fromIntegral (W2_ _ lo) = fromIntegral lo
 
               instance FromIntegral $(bigWordT big) $(intT little) where
-                fromIntegral x =
-                  let W2 _ lo = unlift x :: BigWord (Exp $(wordT bigH)) (Exp $(wordT bigL))
-                  in  fromIntegral lo
+                fromIntegral (W2_ _ lo) = fromIntegral lo
 
               instance FromIntegral $(bigIntT big) $(wordT little) where
-                fromIntegral x =
-                  let I2 _ lo = unlift x :: BigInt (Exp $(intT bigH)) (Exp $(wordT bigL))
-                  in  fromIntegral lo
+                fromIntegral (I2_ _ lo) = fromIntegral lo
 
               instance FromIntegral $(bigIntT big) $(intT little) where
-                fromIntegral x =
-                  let I2 _ lo = unlift x :: BigInt (Exp $(intT bigH)) (Exp $(wordT bigL))
-                  in  fromIntegral lo
+                fromIntegral (I2_ _ lo) = fromIntegral lo
             |]
     --
 #if MIN_VERSION_accelerate(1,2,0)
