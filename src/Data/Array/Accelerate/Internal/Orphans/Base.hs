@@ -28,6 +28,8 @@
 -- excessive class constraints by placing instances next to each other.
 --
 
+#include "MachDeps.h"
+
 module Data.Array.Accelerate.Internal.Orphans.Base ()
   where
 
@@ -920,6 +922,38 @@ $(runQ $ do
 
               instance FromIntegral $(bigWordT big) $(bigIntT big) where
                 fromIntegral (W2_ hi lo) = I2_ (fromIntegral hi) lo
+
+              instance FromIntegral Int $(bigIntT big) where
+                fromIntegral x =
+#if   WORD_SIZE_IN_BITS == 32
+                    fromIntegral (fromIntegral x :: Exp Int32)
+#elif WORD_SIZE_IN_BITS == 64
+                    fromIntegral (fromIntegral x :: Exp Int64)
+#endif
+
+              instance FromIntegral Int $(bigWordT big) where
+                fromIntegral x =
+#if   WORD_SIZE_IN_BITS == 32
+                    fromIntegral (fromIntegral x :: Exp Int32)
+#elif WORD_SIZE_IN_BITS == 64
+                    fromIntegral (fromIntegral x :: Exp Int64)
+#endif
+
+              instance FromIntegral Word $(bigIntT big) where
+                fromIntegral x =
+#if   WORD_SIZE_IN_BITS == 32
+                    fromIntegral (fromIntegral x :: Exp Word32)
+#elif WORD_SIZE_IN_BITS == 64
+                    fromIntegral (fromIntegral x :: Exp Word64)
+#endif
+
+              instance FromIntegral Word $(bigWordT big) where
+                fromIntegral x =
+#if   WORD_SIZE_IN_BITS == 32
+                    fromIntegral (fromIntegral x :: Exp Word32)
+#elif WORD_SIZE_IN_BITS == 64
+                    fromIntegral (fromIntegral x :: Exp Word64)
+#endif
             |]
 
         thFromIntegral2 :: (Int,Int) -> Int -> Q [Dec]
@@ -959,7 +993,7 @@ $(runQ $ do
 #if MIN_VERSION_accelerate(1,2,0)
     e1 <- sequence [ thEnum x            | x <- bigNums ]
 #else
-    e1 <- return []
+    e1 <- return   []
 #endif
     d1 <- sequence [ thFromIntegral1 x   | x <- bigNums ]
     d2 <- sequence [ thFromIntegral2 x y | x <- bigNums, y <- lilNums ]
