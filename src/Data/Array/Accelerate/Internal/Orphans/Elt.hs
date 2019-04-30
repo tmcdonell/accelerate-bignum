@@ -29,7 +29,7 @@ module Data.Array.Accelerate.Internal.Orphans.Elt (
 import Data.Array.Accelerate.Internal.BigInt
 import Data.Array.Accelerate.Internal.BigWord
 
-import Data.Array.Accelerate
+import Data.Array.Accelerate                              hiding ( pattern I2 )
 import Data.Array.Accelerate.Array.Sugar
 import Data.Array.Accelerate.Product
 import Data.Array.Accelerate.Smart
