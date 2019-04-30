@@ -989,6 +989,34 @@ $(runQ $ do
               instance FromIntegral $(bigIntT big) $(intT little) where
                 fromIntegral (I2_ _ lo) = fromIntegral lo
             |]
+
+        thToFloating :: (Int,Int) -> Q [Dec]
+        thToFloating big@(_,b) =
+          [d|
+              instance ToFloating $(bigIntT big) Half where
+                toFloating (I2_ hi lo) =
+                  toFloating hi * (P.fromIntegral (maxBound :: $(wordT b)) + 1) + toFloating lo
+
+              instance ToFloating $(bigIntT big) Float where
+                toFloating (I2_ hi lo) =
+                  toFloating hi * (P.fromIntegral (maxBound :: $(wordT b)) + 1) + toFloating lo
+
+              instance ToFloating $(bigIntT big) Double where
+                toFloating (I2_ hi lo) =
+                  toFloating hi * (P.fromIntegral (maxBound :: $(wordT b)) + 1) + toFloating lo
+
+              instance ToFloating $(bigWordT big) Half where
+                toFloating (W2_ hi lo) =
+                  toFloating hi * (P.fromIntegral (maxBound :: $(wordT b)) + 1) + toFloating lo
+
+              instance ToFloating $(bigWordT big) Float where
+                toFloating (W2_ hi lo) =
+                  toFloating hi * (P.fromIntegral (maxBound :: $(wordT b)) + 1) + toFloating lo
+
+              instance ToFloating $(bigWordT big) Double where
+                toFloating (W2_ hi lo) =
+                  toFloating hi * (P.fromIntegral (maxBound :: $(wordT b)) + 1) + toFloating lo
+            |]
     --
 #if MIN_VERSION_accelerate(1,2,0)
     e1 <- sequence [ thEnum x            | x <- bigNums ]
@@ -997,7 +1025,8 @@ $(runQ $ do
 #endif
     d1 <- sequence [ thFromIntegral1 x   | x <- bigNums ]
     d2 <- sequence [ thFromIntegral2 x y | x <- bigNums, y <- lilNums ]
+    d3 <- sequence [ thToFloating x      | x <- bigNums ]
     --
-    return $ P.concat (e1 P.++ d1 P.++ d2)
+    return $ P.concat (e1 P.++ d1 P.++ d2 P.++ d3)
  )
 
