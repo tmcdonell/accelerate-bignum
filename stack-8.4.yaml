@@ -7,22 +7,22 @@ packages:
 - .
 
 extra-deps:
-- git:    https://github.com/tmcdonell/accelerate.git
-  commit: 48f2e367f4a3fca7adb5d5b2f8f4f3466852f899
+- github: tmcdonell/accelerate
+  commit: cc78ca8ba7397b445418e0646111753ec86bfcdd
 
-- git:    https://github.com/tmcdonell/accelerate-llvm.git
-  commit: 68a700bd52036eb3e5008bb4a84f9da4b0277152
+- github: tmcdonell/accelerate-llvm
+  commit: fb1d36cf603f0b3d219278ebc841effaa17e9fe9
   subdirs:
     - accelerate-llvm
     - accelerate-llvm-native
     - accelerate-llvm-ptx
 
-- git:    https://github.com/tmcdonell/accelerate-io.git
-  commit: aac1b26f14fe804abdbba2a1ccb3ec1c5559cdd3
+- github: tmcdonell/accelerate-io
+  commit: 58b33a84c3d23bbafb1b4353dd24c464d60ca6d0
   subdirs:
     - accelerate-io-vector
 
-- cuda-0.10.0.0
+- cuda-0.10.1.0
 - nvvm-0.9.0.0
 - primitive-0.6.4.0
 
