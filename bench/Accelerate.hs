@@ -15,7 +15,7 @@ import Data.Array.Accelerate.IO.Data.Vector.Storable
 
 import Criterion.Main
 import Data.Proxy
-import Prelude                                                      ( String, Show(..), undefined )
+import Prelude                                                      ( String, Show(..) )
 import Text.Printf
 import qualified Data.Bits                                          as P
 import qualified Data.Vector.Unboxed                                as U

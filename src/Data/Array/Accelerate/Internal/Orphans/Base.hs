@@ -42,17 +42,17 @@ import qualified Data.Array.Accelerate.Internal.LLVM.Native         as CPU
 import qualified Data.Array.Accelerate.Internal.LLVM.PTX            as PTX
 
 import Data.Array.Accelerate                                        as A hiding ( fromInteger )
-import Data.Array.Accelerate.Array.Sugar                            as A ( eltType )
+import Data.Array.Accelerate.Sugar.Elt
 import Data.Array.Accelerate.Analysis.Match                         as A
 import Data.Array.Accelerate.Data.Bits                              as A
 import Data.Array.Accelerate.Smart
 
 import Control.Monad
 import Data.Maybe
-import Data.Typeable
 import Language.Haskell.TH                                          hiding ( Exp )
 import Text.Printf
-import Prelude                                                      ( id, fromInteger, otherwise )
+import Unsafe.Coerce
+import Prelude                                                      ( id, fromInteger )
 import qualified Prelude                                            as P
 
 
@@ -163,12 +163,12 @@ instance ( Integral a, FiniteBits a, FromIntegral a b, Num2 (Exp a), Bounded a
     where
       quotRem' :: Exp (BigWord a b) -> Exp (BigWord a b) -> Exp (BigWord a b, BigWord a b)
       quotRem' x@(W2_ xh xl) y@(W2_ yh yl)
-        = xh <  yh ? ( tup2 (0, x)
-        , xh == yh ? ( xl <  yl ? ( tup2 (0, x)
-                     , xl == yl ? ( tup2 (1, 0)
+        = xh <  yh ? ( T2 0 x
+        , xh == yh ? ( xl <  yl ? ( T2 0 x
+                     , xl == yl ? ( T2 1 0
                      , {-xl > yl -} yh == 0 ? ( let (t2,t1) = quotRem xl yl
                                                 in  lift (W2_ 0 t2, W2_ 0 t1)
-                                              , tup2 (1, W2_ 0 (xl-yl))
+                                              , T2 1 (W2_ 0 (xl-yl))
                                               )
                      ))
         ,{- xh > yh -} yl == 0 ? ( let (t2,t1) = quotRem xh yh
@@ -179,19 +179,19 @@ instance ( Integral a, FiniteBits a, FromIntegral a b, Num2 (Exp a), Bounded a
                                    in
                                    t2 == 0 ?
                                      ( t1 == maxBound ?
-                                       ( tup2 ((W2_ 0 z) + 1, 0)
-                                       , tup2 (W2_ 0 z, W2_ 0 t1)
+                                       ( T2 ((W2_ 0 z) + 1) 0
+                                       , T2 (W2_ 0 z) (W2_ 0 t1)
                                        )
                                      , t1 == maxBound ?
-                                       ( tup2 ((W2_ 0 z) + 2, 1)
+                                       ( T2 ((W2_ 0 z) + 2) 1
                                        , t1 == xor maxBound 1 ?
-                                           ( tup2 ((W2_ 0 z) + 2, 0)
-                                           , tup2 ((W2_ 0 z) + 1, W2_ 0 (t1+1))
+                                           ( T2 ((W2_ 0 z) + 2) 0
+                                           , T2 ((W2_ 0 z) + 1) (W2_ 0 (t1+1))
                                            )
                                        )
                                      )
                      , yh == 0 ? ( let (t2,t1) = untup2 (div1 xh xl yl)
-                                   in  tup2 (t2, W2_ 0 t1)
+                                   in  T2 t2 (W2_ 0 t1)
                      , {- otherwise -}
                        let t1               = countLeadingZeros xh
                            t2               = countLeadingZeros yh
@@ -211,19 +211,19 @@ instance ( Integral a, FiniteBits a, FromIntegral a b, Num2 (Exp a), Bounded a
                            qr2              = t5 > t6 ?
                                                 ( loWord t8 == 0 ?
                                                   ( t7 >= t5 ?
-                                                    ( tup2 (q1-1, t7-t5)
+                                                    ( T2 (q1-1) (t7-t5)
                                                     , loWord t10 == 0 ?
-                                                      ( tup2 (q1-2, t9-t5)
-                                                      , tup2 (q1-2, (maxBound-t5) + t9 + 1)
+                                                      ( T2 (q1-2) (t9-t5)
+                                                      , T2 (q1-2) ((maxBound-t5) + t9 + 1)
                                                       )
                                                     )
-                                                  , tup2 (q1-1, (maxBound-t5) + t7 + 1)
+                                                  , T2 (q1-1) ((maxBound-t5) + t7 + 1)
                                                   )
-                                                , tup2 (q1, t6-t5)
+                                                , T2 (q1) (t6-t5)
                                                 )
-                           (q2,r2)          = unlift qr2
+                           (q2,r2)          = untup2 qr2
                        in
-                       t1 == t2 ? ( tup2 (1, x-y)
+                       t1 == t2 ? ( T2 1 (x-y)
                                   , lift (W2_ 0 (fromIntegral q2), shiftR r2 t2)
                                   )
                      )))
@@ -264,7 +264,7 @@ instance ( Integral a, FiniteBits a, FromIntegral a b, Num2 (Exp a), Bounded a
 
 
       div2 :: Exp a -> Exp a -> Exp a -> (Exp a, Exp a)
-      div2 hhh hll by = go hhh hll (tup2 (0,0))
+      div2 hhh hll by = go hhh hll (T2 0 0)
         where
           go :: Exp a -> Exp a -> Exp (a,a) -> (Exp a, Exp a)
           go h l c = uncurry3 after $ while (not . uncurry3 done) (uncurry3 body) (lift (h,l,c))
@@ -279,7 +279,7 @@ instance ( Integral a, FiniteBits a, FromIntegral a b, Num2 (Exp a), Bounded a
               z         = t4 + t6
 
           body :: Exp a -> Exp a -> Exp (a,a) -> Exp (a, a, (a,a))
-          body h l c = lift (z, t5, (addT (unlift c) (t8,t7)))
+          body h l c = lift (z, t5, (addT (untup2 c) (t8,t7)))
             where
               (t4, t3)  = mulWithCarry h (t1 + 1)
               (t6, t5)  = addWithCarry t3 l
@@ -293,7 +293,7 @@ instance ( Integral a, FiniteBits a, FromIntegral a b, Num2 (Exp a), Bounded a
               (_t6, t5) = addWithCarry t3 l
               (t8, t7)  = mulWithCarry h t2
               (t10, t9) = quotRem t5 by
-              q         = addT (unlift (addT (unlift c) (t8, t7))) (0, t10)
+              q         = addT (untup2 (addT (untup2 c) (t8, t7))) (0, t10)
 
           addT :: (Exp a, Exp a) -> (Exp a, Exp a) -> Exp (a,a)
           addT (lhh, lhl) (llh, lll) =
@@ -557,17 +557,17 @@ instance ( Integral a
           then if y < 0
                  then
                    let (q,r) = quotRem (negate (unsigned x)) (negate (unsigned y))
-                   in  tup2 (signed q, signed (negate r))
+                   in  T2 (signed q) (signed (negate r))
                  else
                    let (q,r) = quotRem (negate (unsigned x)) (unsigned y)
-                   in  tup2 (signed (negate q), signed (negate r))
+                   in  T2 (signed (negate q)) (signed (negate r))
           else if y < 0
                  then
                    let (q,r) = quotRem (unsigned x) (negate (unsigned y))
-                   in  tup2 (signed (negate q), signed r)
+                   in  T2 (signed (negate q)) (signed r)
                  else
                    let (q,r) = quotRem (unsigned x) (unsigned y)
-                   in  tup2 (signed q, signed r)
+                   in  T2 (signed q) (signed r)
 
   {-# SPECIALIZE div :: Exp Int128 -> Exp Int128 -> Exp Int128 #-}
   {-# SPECIALIZE mod :: Exp Int128 -> Exp Int128 -> Exp Int128 #-}
@@ -579,23 +579,23 @@ instance ( Integral a
     if x < 0
       then if y < 0
              then let (q,r) = quotRem (negate (unsigned x)) (negate (unsigned y))
-                  in  tup2 (signed q, signed (negate r))
+                  in  T2 (signed q) (signed (negate r))
              else let (q,r) = quotRem (negate (unsigned x)) (unsigned y)
                       q'    = signed (negate q)
                       r'    = signed (negate r)
                   in
-                  if r == 0 then tup2 (q', r')
-                            else tup2 (q'-1, r'+y)
+                  if r == 0 then T2 q' r'
+                            else T2 (q'-1) ( r'+y)
       else if y < 0
              then let (q,r) = quotRem (unsigned x) (negate (unsigned y))
                       q'    = signed (negate q)
                       r'    = signed r
                   in
                   if r == 0
-                    then tup2 (q', r')
-                    else tup2 (q'-1, r'+y)
+                    then T2 q' r'
+                    else T2 (q'-1) (r'+y)
              else let (q,r) = quotRem (unsigned x) (unsigned y)
-                  in  tup2 (signed q, signed r)
+                  in  T2 (signed q) (signed r)
 
 
 instance ( FiniteBits a, Integral a, FromIntegral a b, FromIntegral a (Signed b)
@@ -789,7 +789,7 @@ instance Num2 (Exp Int64) where
   unsigned     = fromIntegral
   addWithCarry = untup2 $$ CPU.addWithCarryInt64# $ PTX.addWithCarryInt64# awc
     where
-      awc x y = tup2 (hi,lo)
+      awc x y = T2 hi lo
         where
           extX      = x < 0 ? (maxBound, 0)
           extY      = y < 0 ? (maxBound, 0)
@@ -798,7 +798,7 @@ instance Num2 (Exp Int64) where
 
   mulWithCarry = untup2 $$ CPU.mulWithCarryInt64# $ PTX.mulWithCarryInt64# mwc
     where
-      mwc x y = tup2 (hi,lo)
+      mwc x y = T2 hi lo
         where
           extX      = x < 0 ? (negate y, 0)
           extY      = y < 0 ? (negate x, 0)
@@ -813,14 +813,14 @@ instance Num2 (Exp Word64) where
   unsigned     = id
   addWithCarry = untup2 $$ CPU.addWithCarryWord64# $ PTX.addWithCarryWord64# awc
     where
-      awc x y = tup2 (hi,lo)
+      awc x y = T2 hi lo
         where
           lo = x + y
           hi = lo < x ? (1,0)
 
   mulWithCarry = untup2 $$ CPU.mulWithCarryWord64# $ PTX.mulWithCarryWord64# mwc
     where
-      mwc x y = tup2 (hi,lo)
+      mwc x y = T2 hi lo
         where
           xHi         = shiftR x 32
           yHi         = shiftR y 32
@@ -854,17 +854,23 @@ defaultUnwrapped op x y = (hi, lo)
 -- Utilities
 -- ---------
 
+untup2 :: (Elt a, Elt b) => Exp (a, b) -> (Exp a, Exp b)
+untup2 (T2 a b) = (a, b)
+
+untup3 :: (Elt a, Elt b, Elt c) => Exp (a, b, c) -> (Exp a, Exp b, Exp c)
+untup3 (T3 a b c) = (a, b, c)
+
 matchInt128 :: forall t. Elt t => Maybe (t :~: Int128)
 matchInt128
-  | Just Refl <- matchTupleType (eltType @t) (eltType @Int128)
-  = gcast Refl
+  | Just Refl <- matchTypeR (eltR @t) (eltR @Int128)
+  = Just (unsafeCoerce Refl)
   | otherwise
   = Nothing
 
 matchWord128 :: forall t. Elt t => Maybe (t :~: Word128)
 matchWord128
-  | Just Refl <- matchTupleType (eltType @t) (eltType @Word128)
-  = gcast Refl
+  | Just Refl <- matchTypeR (eltR @t) (eltR @Word128)
+  = Just (unsafeCoerce Refl)
   | otherwise
   = Nothing
 

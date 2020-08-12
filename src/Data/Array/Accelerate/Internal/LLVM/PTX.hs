@@ -27,6 +27,7 @@ module Data.Array.Accelerate.Internal.LLVM.PTX (
 ) where
 
 import Data.Array.Accelerate                                        as A
+import Data.Array.Accelerate.Sugar.Elt
 import Data.Array.Accelerate.Internal.BigInt
 import Data.Array.Accelerate.Internal.BigWord
 import Data.Array.Accelerate.Internal.Orphans.Elt                   ()
@@ -41,7 +42,7 @@ import qualified Data.Array.Accelerate.Internal.LLVM.Prim           as Prim
 #ifdef ACCELERATE_LLVM_PTX_BACKEND
 wrap2 :: (Elt a, Elt b, Elt c)
       => String                                       -- name of the operation
-      -> IRFun1 PTX () ((a, b) -> c)                  -- foreign implementation
+      -> IRFun1 PTX () (EltR (a, b) -> EltR c)        -- foreign implementation
       -> (Exp a -> Exp b -> Exp c)                    -- fallback implementation
       -> Exp a
       -> Exp b

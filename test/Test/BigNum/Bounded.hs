@@ -52,7 +52,7 @@ test_bounded runN =
         , testProperty "maxBound" $ prop_maxBound p
         ]
 
-    testAcc :: (Eq a, Bounded a, A.Bounded a, Show (ArgType a))
+    testAcc :: (Show a, Eq a, Bounded a, A.Bounded a, Show (ArgType a))
             => Proxy a
             -> TestTree
     testAcc p =
@@ -79,7 +79,7 @@ prop_maxBound p =
     maxBound === fromIso p maxBound
 
 prop_acc_minBound
-    :: forall a. (Eq a, Bounded a, A.Bounded a)
+    :: forall a. (Show a, Eq a, Bounded a, A.Bounded a)
     => RunN
     -> Proxy a
     -> Property
@@ -88,7 +88,7 @@ prop_acc_minBound runN _ =
     minBound === isoL (runN (A.unit (minBound :: A.Exp a)))
 
 prop_acc_maxBound
-    :: forall a. (Eq a, Bounded a, A.Bounded a)
+    :: forall a. (Show a, Eq a, Bounded a, A.Bounded a)
     => RunN
     -> Proxy a
     -> Property

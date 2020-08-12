@@ -42,7 +42,7 @@ test_num2 runN =
     , testElt i64
     ]
   where
-    testElt :: ( Num2 e, Integral e, Show e, Show (ArgType e), FiniteBits (Unsigned e), Integral (Unsigned e)
+    testElt :: ( Show e, Num2 e, Integral e, Show e, Show (ArgType e), FiniteBits (Unsigned e), Integral (Unsigned e)
                , Num2 (Exp e), Elt e, Elt (Unsigned e), Lift Exp (Unsigned (Exp e)), Plain (Unsigned (Exp e)) ~ Unsigned e )
             => Gen e
             -> TestTree
@@ -57,7 +57,7 @@ test_num2 runN =
 
 
 prop_addWithCarry
-    :: (Num2 e, Integral e, Show e, FiniteBits (Unsigned e), Integral (Unsigned e))
+    :: (Show e, Num2 e, Integral e, Show e, FiniteBits (Unsigned e), Integral (Unsigned e))
     => Gen e
     -> Property
 prop_addWithCarry e =
@@ -67,7 +67,7 @@ prop_addWithCarry e =
     uncurry toInteger2 (addWithCarry x y) === toInteger x + toInteger y
 
 prop_mulWithCarry
-    :: (Num2 e, Integral e, Show e, FiniteBits (Unsigned e), Integral (Unsigned e))
+    :: (Show e, Num2 e, Integral e, Show e, FiniteBits (Unsigned e), Integral (Unsigned e))
     => Gen e
     -> Property
 prop_mulWithCarry e =
@@ -77,7 +77,7 @@ prop_mulWithCarry e =
     uncurry toInteger2 (mulWithCarry x y) === toInteger x * toInteger y
 
 prop_acc_addWithCarry
-    :: ( Num2 (Exp e), Integral e, FiniteBits (Unsigned e), Integral (Unsigned e)
+    :: ( Show e, Num2 (Exp e), Integral e, FiniteBits (Unsigned e), Integral (Unsigned e)
        , Elt e, Elt (Unsigned e), Lift Exp (Unsigned (Exp e)), Plain (Unsigned (Exp e)) ~ Unsigned e )
     => RunN
     -> Gen e
@@ -89,7 +89,7 @@ prop_acc_addWithCarry runN e =
     uncurry toInteger2 (with_acc_binary runN (A.lift $$ addWithCarry) x y) === toInteger x + toInteger y
 
 prop_acc_mulWithCarry
-    :: ( Num2 (Exp e), Integral e, FiniteBits (Unsigned e), Integral (Unsigned e)
+    :: ( Show e, Num2 (Exp e), Integral e, FiniteBits (Unsigned e), Integral (Unsigned e)
        , Elt e, Elt (Unsigned e), Lift Exp (Unsigned (Exp e)), Plain (Unsigned (Exp e)) ~ Unsigned e )
     => RunN
     -> Gen e
