@@ -48,7 +48,6 @@ import Data.Array.Accelerate.Data.Bits                              as A
 import Data.Array.Accelerate.Smart
 
 import Control.Monad
-import Data.Maybe
 import Language.Haskell.TH                                          hiding ( Exp )
 import Text.Printf
 import Unsafe.Coerce
