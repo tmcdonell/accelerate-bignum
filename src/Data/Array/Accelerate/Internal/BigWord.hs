@@ -1,14 +1,15 @@
 {-# LANGUAGE ConstraintKinds      #-}
+{-# LANGUAGE DeriveGeneric        #-}
 {-# LANGUAGE FlexibleContexts     #-}
 {-# LANGUAGE ScopedTypeVariables  #-}
 {-# LANGUAGE TypeFamilies         #-}
 {-# LANGUAGE UndecidableInstances #-}
 -- |
 -- Module      : Data.Array.Accelerate.Internal.BigWord
--- Copyright   : [2016] Trevor L. McDonell
+-- Copyright   : [2016..2020] Trevor L. McDonell
 -- License     : BSD3
 --
--- Maintainer  : Trevor L. McDonell <tmcdonell@cse.unsw.edu.au>
+-- Maintainer  : Trevor L. McDonell <trevor.mcdonell@gmail.com>
 -- Stability   : experimental
 -- Portability : non-portable (GHC extensions)
 --
@@ -42,6 +43,7 @@ module Data.Array.Accelerate.Internal.BigWord (
 import Data.Bits
 import Data.Ratio
 import Data.Word
+import GHC.Generics
 
 import {-# SOURCE #-} Data.Array.Accelerate.Internal.BigInt
 import Data.Array.Accelerate.Internal.Num2
@@ -59,7 +61,7 @@ type Word512 = BigWord Word256 Word256
 -- | Large word of fixed size represented as separate high and low (unsigned)
 -- words.
 --
-data BigWord    hi lo = W2 !hi !lo
+data BigWord    hi lo = W2 !hi !lo deriving Generic
 type BigWordCtx hi lo = (hi ~ Unsigned hi, lo ~ Unsigned lo)
 
 

@@ -5,10 +5,10 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 -- |
 -- Module      : Test.BigNum.FromIntegral
--- Copyright   : [2017] Trevor L. McDonell
+-- Copyright   : [2017..2020] Trevor L. McDonell
 -- License     : BSD3
 --
--- Maintainer  : Trevor L. McDonell <tmcdonell@cse.unsw.edu.au>
+-- Maintainer  : Trevor L. McDonell <trevor.mcdonell@gmail.com>
 -- Stability   : experimental
 -- Portability : non-portable (GHC extensions)
 --
@@ -75,7 +75,7 @@ test_fromIntegral runN =
     ]
   where
     testElt
-        :: (Integral a, Num b, Eq b, A.Integral a, A.Num b, A.FromIntegral a b, Show (ArgType a), Show (ArgType b))
+        :: (Show a, Show b, Integral a, Num b, Eq b, A.Integral a, A.Num b, A.FromIntegral a b, Show (ArgType a), Show (ArgType b))
         => Gen a
         -> Proxy b
         -> TestTree
@@ -84,7 +84,7 @@ test_fromIntegral runN =
 
 
 prop_fromIntegral
-    :: forall a b. (Integral a, Num b, Eq b, A.Integral a, A.Num b, A.FromIntegral a b)
+    :: forall a b. (Show a, Show b, Integral a, Num b, Eq b, A.Integral a, A.Num b, A.FromIntegral a b)
     => RunN
     -> Gen a
     -> Proxy b

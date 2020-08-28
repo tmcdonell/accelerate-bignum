@@ -4,10 +4,10 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 -- |
 -- Module      : Test.BigNum.Num
--- Copyright   : [2017] Trevor L. McDonell
+-- Copyright   : [2017..2020] Trevor L. McDonell
 -- License     : BSD3
 --
--- Maintainer  : Trevor L. McDonell <tmcdonell@cse.unsw.edu.au>
+-- Maintainer  : Trevor L. McDonell <trevor.mcdonell@gmail.com>
 -- Stability   : experimental
 -- Portability : non-portable (GHC extensions)
 --
@@ -56,7 +56,7 @@ test_num runN =
         , testProperty "fromInteger" $ prop_fromInteger b
         ]
 
-    testAcc :: (Eq a, Num a, A.Num a, Show (ArgType a))
+    testAcc :: (Show a, Eq a, Num a, A.Num a, Show (ArgType a))
             => Gen a
             -> TestTree
     testAcc a =
@@ -145,7 +145,7 @@ prop_fromInteger t =
 
 
 prop_acc_negate
-    :: (Num a, A.Num a, Eq a)
+    :: (Show a, Num a, A.Num a, Eq a)
     => RunN
     -> Gen a
     -> Property
@@ -155,7 +155,7 @@ prop_acc_negate runN a =
     prop_acc_unary negate negate runN x
 
 prop_acc_abs
-    :: (Num a, A.Num a, Eq a)
+    :: (Show a, Num a, A.Num a, Eq a)
     => RunN
     -> Gen a
     -> Property
@@ -165,7 +165,7 @@ prop_acc_abs runN a =
     prop_acc_unary abs abs runN x
 
 prop_acc_signum
-    :: (Num a, A.Num a, Eq a)
+    :: (Show a, Num a, A.Num a, Eq a)
     => RunN
     -> Gen a
     -> Property
@@ -175,7 +175,7 @@ prop_acc_signum runN a =
     prop_acc_unary signum signum runN x
 
 prop_acc_add
-    :: (Num a, A.Num a, Eq a)
+    :: (Show a, Num a, A.Num a, Eq a)
     => RunN
     -> Gen a
     -> Property
@@ -186,7 +186,7 @@ prop_acc_add runN a =
     prop_acc_binary (+) (+) runN x y
 
 prop_acc_sub
-    :: (Num a, A.Num a, Eq a)
+    :: (Show a, Num a, A.Num a, Eq a)
     => RunN
     -> Gen a
     -> Property
@@ -197,7 +197,7 @@ prop_acc_sub runN a =
     prop_acc_binary (-) (-) runN x y
 
 prop_acc_mul
-    :: (Num a, A.Num a, Eq a)
+    :: (Show a, Num a, A.Num a, Eq a)
     => RunN
     -> Gen a
     -> Property
@@ -208,7 +208,7 @@ prop_acc_mul runN a =
     prop_acc_binary (*) (*) runN x y
 
 prop_acc_fromInteger
-    :: forall proxy a. (Num a, Eq a, A.Num a)
+    :: forall proxy a. (Show a, Num a, Eq a, A.Num a)
     => RunN
     -> proxy a
     -> Property

@@ -4,10 +4,10 @@
 {-# LANGUAGE RankNTypes       #-}
 -- |
 -- Module      : Test.BigNum.Integral
--- Copyright   : [2017] Trevor L. McDonell
+-- Copyright   : [2017..2020] Trevor L. McDonell
 -- License     : BSD3
 --
--- Maintainer  : Trevor L. McDonell <tmcdonell@cse.unsw.edu.au>
+-- Maintainer  : Trevor L. McDonell <trevor.mcdonell@gmail.com>
 -- Stability   : experimental
 -- Portability : non-portable (GHC extensions)
 --
@@ -56,7 +56,7 @@ test_integral runN =
         , testProperty "toInteger"  $ prop_toInteger a b
         ]
 
-    testAcc :: (Eq a, Integral a, A.Integral a, Show (ArgType a))
+    testAcc :: (Show a, Eq a, Integral a, A.Integral a, Show (ArgType a))
             => Gen a
             -> TestTree
     testAcc a =
@@ -153,7 +153,7 @@ prop_toInteger a b =
     prop_unary' toInteger toInteger b x
 
 prop_acc_quot
-    :: (Integral a, A.Integral a)
+    :: (Show a, Integral a, A.Integral a)
     => RunN
     -> Gen a
     -> Property
@@ -164,7 +164,7 @@ prop_acc_quot runN a =
     prop_acc_binary quot quot runN x y
 
 prop_acc_rem
-    :: (Integral a, A.Integral a)
+    :: (Show a, Integral a, A.Integral a)
     => RunN
     -> Gen a
     -> Property
@@ -175,7 +175,7 @@ prop_acc_rem runN a =
     prop_acc_binary rem rem runN x y
 
 prop_acc_div
-    :: (Integral a, A.Integral a)
+    :: (Show a, Integral a, A.Integral a)
     => RunN
     -> Gen a
     -> Property
@@ -186,7 +186,7 @@ prop_acc_div runN a =
     prop_acc_binary div div runN x y
 
 prop_acc_mod
-    :: (Integral a, A.Integral a)
+    :: (Show a, Integral a, A.Integral a)
     => RunN
     -> Gen a
     -> Property
@@ -197,7 +197,7 @@ prop_acc_mod runN a =
     prop_acc_binary mod mod runN x y
 
 prop_acc_quotRem
-    :: (Integral a, A.Integral a)
+    :: (Show a, Integral a, A.Integral a)
     => RunN
     -> Gen a
     -> Property
@@ -208,7 +208,7 @@ prop_acc_quotRem runN a =
     prop_acc_binary quotRem (A.lift $$ quotRem) runN x y
 
 prop_acc_divMod
-    :: (Integral a, A.Integral a)
+    :: (Show a, Integral a, A.Integral a)
     => RunN
     -> Gen a
     -> Property

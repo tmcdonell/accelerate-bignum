@@ -1,14 +1,15 @@
 {-# LANGUAGE ConstraintKinds      #-}
+{-# LANGUAGE DeriveGeneric        #-}
 {-# LANGUAGE FlexibleContexts     #-}
 {-# LANGUAGE ScopedTypeVariables  #-}
 {-# LANGUAGE TypeFamilies         #-}
 {-# LANGUAGE UndecidableInstances #-}
 -- |
 -- Module      : Data.Array.Accelerate.Internal.BigInt
--- Copyright   : [2016] Trevor L. McDonell
+-- Copyright   : [2016..2020] Trevor L. McDonell
 -- License     : BSD3
 --
--- Maintainer  : Trevor L. McDonell <tmcdonell@cse.unsw.edu.au>
+-- Maintainer  : Trevor L. McDonell <trevor.mcdonell@gmail.com>
 -- Stability   : experimental
 -- Portability : non-portable (GHC extensions)
 --
@@ -38,6 +39,7 @@ import Data.Bits
 import Data.Int
 import Data.Ratio
 import Data.Word
+import GHC.Generics
 
 import Data.Array.Accelerate.Internal.BigWord
 import Data.Array.Accelerate.Internal.Num2
@@ -55,7 +57,7 @@ type Int512 = BigInt Int256 Word256
 -- | Large integers of fixed size represented as separate (signed) high and
 -- (unsigned) low words.
 --
-data BigInt    hi lo = I2 !hi !lo
+data BigInt    hi lo = I2 !hi !lo deriving Generic
 type BigIntCtx hi lo = (hi ~ Signed hi, lo ~ Unsigned lo, Signed (Unsigned hi) ~ hi)
 
 

@@ -3,10 +3,10 @@
 {-# LANGUAGE RankNTypes       #-}
 -- |
 -- Module      : Test.BigNum.Eq
--- Copyright   : [2017] Trevor L. McDonell
+-- Copyright   : [2017..2020] Trevor L. McDonell
 -- License     : BSD3
 --
--- Maintainer  : Trevor L. McDonell <tmcdonell@cse.unsw.edu.au>
+-- Maintainer  : Trevor L. McDonell <trevor.mcdonell@gmail.com>
 -- Stability   : experimental
 -- Portability : non-portable (GHC extensions)
 --
@@ -50,7 +50,7 @@ test_eq runN =
         , testProperty "(/=)" $ prop_neq a b
         ]
 
-    testAcc :: (Eq a, A.Eq a, Show (ArgType a))
+    testAcc :: (Show a, Eq a, A.Eq a, Show (ArgType a))
             => Gen a
             -> TestTree
     testAcc a =
@@ -83,7 +83,7 @@ prop_neq a b =
     prop_binary' (/=) (/=) b x y
 
 prop_acc_eq
-    :: (Eq a, A.Eq a)
+    :: (Show a, Eq a, A.Eq a)
     => RunN
     -> Gen a
     -> Property
@@ -94,7 +94,7 @@ prop_acc_eq runN a =
     prop_acc_binary (==) (A.==) runN x y
 
 prop_acc_neq
-    :: (Eq a, A.Eq a)
+    :: (Show a, Eq a, A.Eq a)
     => RunN
     -> Gen a
     -> Property

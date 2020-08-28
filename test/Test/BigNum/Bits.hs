@@ -4,10 +4,10 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 -- |
 -- Module      : Test.BigNum.Bits
--- Copyright   : [2017] Trevor L. McDonell
+-- Copyright   : [2017..2020] Trevor L. McDonell
 -- License     : BSD3
 --
--- Maintainer  : Trevor L. McDonell <tmcdonell@cse.unsw.edu.au>
+-- Maintainer  : Trevor L. McDonell <trevor.mcdonell@gmail.com>
 -- Stability   : experimental
 -- Portability : non-portable (GHC extensions)
 --
@@ -70,7 +70,7 @@ test_bits runN =
         , testProperty "popCount"      $ prop_popCount a b
         ]
 
-    testAcc :: (Eq a, FiniteBits a, A.FiniteBits a, Show (ArgType a))
+    testAcc :: (Show a, Eq a, FiniteBits a, A.FiniteBits a, Show (ArgType a))
             => Gen a
             -> TestTree
     testAcc a =
@@ -266,7 +266,7 @@ prop_popCount a b =
     prop_unary' popCount popCount b x
 
 prop_acc_complement
-    :: (Bits a, A.Bits a)
+    :: (Show a, Bits a, A.Bits a)
     => RunN
     -> Gen a
     -> Property
@@ -276,7 +276,7 @@ prop_acc_complement runN a =
     prop_acc_unary complement A.complement runN x
 
 prop_acc_xor
-    :: (Bits a, A.Bits a)
+    :: (Show a, Bits a, A.Bits a)
     => RunN
     -> Gen a
     -> Property
@@ -287,7 +287,7 @@ prop_acc_xor runN a =
     prop_acc_binary xor A.xor runN x y
 
 prop_acc_band
-    :: (Bits a, A.Bits a)
+    :: (Show a, Bits a, A.Bits a)
     => RunN
     -> Gen a
     -> Property
@@ -298,7 +298,7 @@ prop_acc_band runN a =
     prop_acc_binary (.&.) (A..&.) runN x y
 
 prop_acc_bor
-    :: (Bits a, A.Bits a)
+    :: (Show a, Bits a, A.Bits a)
     => RunN
     -> Gen a
     -> Property
@@ -310,7 +310,7 @@ prop_acc_bor runN a =
 
 
 prop_acc_shiftL
-    :: (FiniteBits a, A.FiniteBits a)
+    :: (Show a, FiniteBits a, A.FiniteBits a)
     => RunN
     -> Gen a
     -> Property
@@ -321,7 +321,7 @@ prop_acc_shiftL runN a =
     prop_acc_binary shiftL A.shiftL runN x n
 
 prop_acc_shiftR
-    :: (FiniteBits a, A.FiniteBits a)
+    :: (Show a, FiniteBits a, A.FiniteBits a)
     => RunN
     -> Gen a
     -> Property
@@ -332,7 +332,7 @@ prop_acc_shiftR runN a =
     prop_acc_binary shiftR A.shiftR runN x n
 
 prop_acc_rotateL
-    :: (FiniteBits a, A.FiniteBits a)
+    :: (Show a, FiniteBits a, A.FiniteBits a)
     => RunN
     -> Gen a
     -> Property
@@ -343,7 +343,7 @@ prop_acc_rotateL runN a =
     prop_acc_binary rotateL A.rotateL runN x n
 
 prop_acc_rotateR
-    :: (FiniteBits a, A.FiniteBits a)
+    :: (Show a, FiniteBits a, A.FiniteBits a)
     => RunN
     -> Gen a
     -> Property
@@ -354,7 +354,7 @@ prop_acc_rotateR runN a =
     prop_acc_binary rotateR A.rotateR runN x n
 
 prop_acc_shift
-    :: (FiniteBits a, A.FiniteBits a)
+    :: (Show a, FiniteBits a, A.FiniteBits a)
     => RunN
     -> Gen a
     -> Property
@@ -365,7 +365,7 @@ prop_acc_shift runN a =
     prop_acc_binary shift A.shift runN x n
 
 prop_acc_rotate
-    :: (FiniteBits a, A.FiniteBits a)
+    :: (Show a, FiniteBits a, A.FiniteBits a)
     => RunN
     -> Gen a
     -> Property
@@ -376,7 +376,7 @@ prop_acc_rotate runN a =
     prop_acc_binary rotate A.rotate runN x n
 
 prop_acc_bit
-    :: forall proxy a. (FiniteBits a, A.FiniteBits a)
+    :: forall proxy a. (Show a, FiniteBits a, A.FiniteBits a)
     => RunN
     -> proxy a
     -> Property
@@ -386,7 +386,7 @@ prop_acc_bit runN _ =
 
 
 prop_acc_testBit
-    :: (FiniteBits a, A.FiniteBits a)
+    :: (Show a, FiniteBits a, A.FiniteBits a)
     => RunN
     -> Gen a
     -> Property
@@ -397,7 +397,7 @@ prop_acc_testBit runN a =
     prop_acc_binary testBit A.testBit runN x n
 
 prop_acc_setBit
-    :: (FiniteBits a, A.FiniteBits a)
+    :: (Show a, FiniteBits a, A.FiniteBits a)
     => RunN
     -> Gen a
     -> Property
@@ -408,7 +408,7 @@ prop_acc_setBit runN a =
     prop_acc_binary setBit A.setBit runN x n
 
 prop_acc_clearBit
-    :: (FiniteBits a, A.FiniteBits a)
+    :: (Show a, FiniteBits a, A.FiniteBits a)
     => RunN
     -> Gen a
     -> Property
@@ -419,7 +419,7 @@ prop_acc_clearBit runN a =
     prop_acc_binary clearBit A.clearBit runN x n
 
 prop_acc_complementBit
-    :: (FiniteBits a, A.FiniteBits a)
+    :: (Show a, FiniteBits a, A.FiniteBits a)
     => RunN
     -> Gen a
     -> Property
@@ -430,7 +430,7 @@ prop_acc_complementBit runN a =
     prop_acc_binary complementBit A.complementBit runN x n
 
 prop_acc_popCount
-    :: (FiniteBits a, A.FiniteBits a)
+    :: (Show a, FiniteBits a, A.FiniteBits a)
     => RunN
     -> Gen a
     -> Property

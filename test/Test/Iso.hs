@@ -8,10 +8,10 @@
 {-# LANGUAGE TypeSynonymInstances   #-}
 -- |
 -- Module      : Test.Iso
--- Copyright   : [2017] Trevor L. McDonell
+-- Copyright   : [2017..2020] Trevor L. McDonell
 -- License     : BSD3
 --
--- Maintainer  : Trevor L. McDonell <tmcdonell@cse.unsw.edu.au>
+-- Maintainer  : Trevor L. McDonell <trevor.mcdonell@gmail.com>
 -- Stability   : experimental
 -- Portability : non-portable (GHC extensions)
 --
@@ -20,8 +20,7 @@ module Test.Iso where
 
 import Test.Base
 
-import Data.Array.Accelerate.Array.Sugar
-import Data.Array.Accelerate                                        ( Exp )
+import Data.Array.Accelerate                                        ( Exp, Elt, Scalar, fromFunction, indexArray, Z(..) )
 import qualified Data.Array.Accelerate                              as A
 
 import Hedgehog
@@ -39,7 +38,7 @@ toIso _ = isoR
 
 instance Elt a => Iso a (Scalar a) where
   isoR x = fromFunction Z (const x)
-  isoL x = x ! Z
+  isoL x = indexArray x Z
 
 
 with_unary :: Iso a b => proxy b -> (b -> b) -> a -> a
@@ -121,7 +120,7 @@ with_acc_binary runN f x y = isoL $ go (isoR x) (isoR y)
 
 {-# INLINE prop_acc_unary #-}
 prop_acc_unary
-    :: (Elt a, Elt b, Eq b, MonadTest m)
+    :: (Elt a, Elt b, Eq b, Show b, MonadTest m)
     => (a -> b)
     -> (Exp a -> Exp b)
     -> RunN
@@ -131,7 +130,7 @@ prop_acc_unary f g runN x = f x === with_acc_unary runN g x
 
 {-# INLINE prop_acc_binary #-}
 prop_acc_binary
-    :: (Elt a, Elt b, Elt c, Eq c, MonadTest m)
+    :: (Elt a, Elt b, Elt c, Eq c, Show c, MonadTest m)
     => (a -> b -> c)
     -> (Exp a -> Exp b -> Exp c)
     -> RunN

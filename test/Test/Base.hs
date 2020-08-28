@@ -4,10 +4,10 @@
 {-# LANGUAGE RankNTypes        #-}
 -- |
 -- Module      : Test.Base
--- Copyright   : [2017] Trevor L. McDonell
+-- Copyright   : [2017..2020] Trevor L. McDonell
 -- License     : BSD3
 --
--- Maintainer  : Trevor L. McDonell <tmcdonell@cse.unsw.edu.au>
+-- Maintainer  : Trevor L. McDonell <trevor.mcdonell@gmail.com>
 -- Stability   : experimental
 -- Portability : non-portable (GHC extensions)
 --
@@ -15,8 +15,9 @@
 module Test.Base where
 
 import Data.Array.Accelerate                                        ( Acc, Arrays, Array, Shape, Elt, fromList )
-import Data.Array.Accelerate.Array.Sugar                            ( size )
-import Data.Array.Accelerate.Trafo                                  ( Afunction, AfunctionR )
+import Data.Array.Accelerate.Sugar.Shape                            ( size )
+import Data.Array.Accelerate.Trafo                                  ( Afunction )
+import Data.Array.Accelerate.Trafo.Sharing                          ( AfunctionR )
 import Data.Array.Accelerate.Data.Complex
 
 import Data.Array.Accelerate.Data.BigInt

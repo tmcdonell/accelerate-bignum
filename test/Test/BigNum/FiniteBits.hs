@@ -3,10 +3,10 @@
 {-# LANGUAGE RankNTypes       #-}
 -- |
 -- Module      : Test.BigNum.FiniteBits
--- Copyright   : [2017] Trevor L. McDonell
+-- Copyright   : [2017..2020] Trevor L. McDonell
 -- License     : BSD3
 --
--- Maintainer  : Trevor L. McDonell <tmcdonell@cse.unsw.edu.au>
+-- Maintainer  : Trevor L. McDonell <trevor.mcdonell@gmail.com>
 -- Stability   : experimental
 -- Portability : non-portable (GHC extensions)
 --
@@ -51,7 +51,7 @@ test_finitebits runN =
         , testProperty "countTrailingZeros" $ prop_ctz a b
         ]
 
-    testAcc :: (Eq a, FiniteBits a, A.FiniteBits a, Show (ArgType a))
+    testAcc :: (Show a, Eq a, FiniteBits a, A.FiniteBits a, Show (ArgType a))
             => Gen a
             -> TestTree
     testAcc a =
@@ -82,7 +82,7 @@ prop_ctz a b =
     prop_unary' countTrailingZeros countTrailingZeros b x
 
 prop_acc_clz
-    :: (FiniteBits a, A.FiniteBits a)
+    :: (Show a, FiniteBits a, A.FiniteBits a)
     => RunN
     -> Gen a
     -> Property
@@ -92,7 +92,7 @@ prop_acc_clz runN a =
     prop_acc_unary countLeadingZeros  A.countLeadingZeros runN x
 
 prop_acc_ctz
-    :: (FiniteBits a, A.FiniteBits a)
+    :: (Show a, FiniteBits a, A.FiniteBits a)
     => RunN
     -> Gen a
     -> Property

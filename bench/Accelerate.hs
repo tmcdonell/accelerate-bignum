@@ -1,5 +1,4 @@
 {-# LANGUAGE BangPatterns        #-}
-{-# LANGUAGE CPP                 #-}
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE FlexibleInstances   #-}
 {-# LANGUAGE PolyKinds           #-}
@@ -12,15 +11,11 @@ import Data.Array.Accelerate                                        as A
 import Data.Array.Accelerate.Data.Bits                              as A
 import Data.Array.Accelerate.Data.BigWord
 import Data.Array.Accelerate.Data.BigInt
-#if !MIN_VERSION_accelerate_io(1,2,0)
-import Data.Array.Accelerate.IO
-#else
 import Data.Array.Accelerate.IO.Data.Vector.Storable
-#endif
 
 import Criterion.Main
 import Data.Proxy
-import Prelude                                                      ( String, Show(..), undefined )
+import Prelude                                                      ( String, Show(..) )
 import Text.Printf
 import qualified Data.Bits                                          as P
 import qualified Data.Vector.Unboxed                                as U

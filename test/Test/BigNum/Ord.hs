@@ -3,10 +3,10 @@
 {-# LANGUAGE RankNTypes       #-}
 -- |
 -- Module      : Test.BigNum.Ord
--- Copyright   : [2017] Trevor L. McDonell
+-- Copyright   : [2017..2020] Trevor L. McDonell
 -- License     : BSD3
 --
--- Maintainer  : Trevor L. McDonell <tmcdonell@cse.unsw.edu.au>
+-- Maintainer  : Trevor L. McDonell <trevor.mcdonell@gmail.com>
 -- Stability   : experimental
 -- Portability : non-portable (GHC extensions)
 --
@@ -49,7 +49,7 @@ test_ord runN =
         [ testProperty "compare" $ prop_compare a b
         ]
 
-    testAcc :: (Ord a, A.Ord a, Show (ArgType a))
+    testAcc :: (Show a, Ord a, A.Ord a, Show (ArgType a))
             => Gen a
             -> TestTree
     testAcc a =
@@ -73,7 +73,7 @@ prop_compare a b =
     prop_binary' compare compare b x y
 
 prop_acc_lt
-    :: (Ord a, A.Ord a)
+    :: (Show a, Ord a, A.Ord a)
     => RunN
     -> Gen a
     -> Property
@@ -84,7 +84,7 @@ prop_acc_lt runN a =
     prop_acc_binary (<) (A.<) runN x y
 
 prop_acc_gt
-    :: (Ord a, A.Ord a)
+    :: (Show a, Ord a, A.Ord a)
     => RunN
     -> Gen a
     -> Property
@@ -95,7 +95,7 @@ prop_acc_gt runN a =
     prop_acc_binary (>) (A.>) runN x y
 
 prop_acc_lte
-    :: (Ord a, A.Ord a)
+    :: (Show a, Ord a, A.Ord a)
     => RunN
     -> Gen a
     -> Property
@@ -106,7 +106,7 @@ prop_acc_lte runN a =
     prop_acc_binary (<=) (A.<=) runN x y
 
 prop_acc_gte
-    :: (Ord a, A.Ord a)
+    :: (Show a, Ord a, A.Ord a)
     => RunN
     -> Gen a
     -> Property
