@@ -17,7 +17,7 @@ for [Accelerate][accelerate]. Signed and unsigned 96, 128, 160, 192, 224, 256, a
 types are predefined.
 
 Contributions and bug reports are welcome!<br>
-Please feel free to contact me through GitHub or [gitter.im][gitter.im].
+Please feel free to contact me through [GitHub][accelerate] or [gitter.im][gitter.im].
 
  [accelerate]:          https://github.com/AccelerateHS/accelerate
  [gitter.im]:           https://gitter.im/AccelerateHS/Lobby

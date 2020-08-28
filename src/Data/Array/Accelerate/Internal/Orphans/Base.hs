@@ -16,10 +16,10 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 -- |
 -- Module      : Data.Array.Accelerate.Internal.Orphans.Base
--- Copyright   : [2016] Trevor L. McDonell
+-- Copyright   : [2016..2020] Trevor L. McDonell
 -- License     : BSD3
 --
--- Maintainer  : Trevor L. McDonell <tmcdonell@cse.unsw.edu.au>
+-- Maintainer  : Trevor L. McDonell <trevor.mcdonell@gmail.com>
 -- Stability   : experimental
 -- Portability : non-portable (GHC extensions)
 --
@@ -48,7 +48,6 @@ import Data.Array.Accelerate.Data.Bits                              as A
 import Data.Array.Accelerate.Smart
 
 import Control.Monad
-import Data.Maybe
 import Language.Haskell.TH                                          hiding ( Exp )
 import Text.Printf
 import Unsafe.Coerce

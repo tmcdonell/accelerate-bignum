@@ -14,9 +14,9 @@ bug-reports:            https://github.com/tmcdonell/accelerate-bignum/issues
 license:                BSD3
 license-file:           LICENSE
 author:                 Trevor L. McDonell
-maintainer:             Trevor L. McDonell <tmcdonell@cse.unsw.edu.au>
+maintainer:             Trevor L. McDonell <trevor.mcdonell@gmail.com>
 copyright:              BSD3
-category:               Compilers/Interpreters, Concurrency, Data, Parallelism
+category:               Accelerate, Data
 build-type:             Simple
 cabal-version:          >= 1.10
 
@@ -225,8 +225,7 @@ source-repository head
 
 source-repository this
   type:     git
-  tag:      0.3.0.0
+  tag:      v0.3.0.0
   location: https://github.com/tmcdonell/accelerate-bignum
 
 -- vim: nospell
-
